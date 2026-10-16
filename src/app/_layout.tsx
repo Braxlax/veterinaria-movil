@@ -1,18 +1,30 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { SolicitudProvider } from '../store/SolicitudContext';
+import { ToastProvider } from '../store/ToastContext';
+import { CLINICA_NOMBRE } from '../utils/constants';
+import { colors } from '../utils/theme';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <SolicitudProvider>
+      <ToastProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.primary },
+            headerTintColor: colors.white,
+            headerTitleStyle: { fontWeight: '700' },
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="solicitudes" options={{ title: `🐾 ${CLINICA_NOMBRE}`, headerBackVisible: false }} />
+          <Stack.Screen name="crear" options={{ title: 'Nueva solicitud' }} />
+          <Stack.Screen name="detalle" options={{ title: 'Detalle de solicitud' }} />
+        </Stack>
+      </ToastProvider>
+    </SolicitudProvider>
   );
 }

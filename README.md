@@ -1,56 +1,85 @@
-# Welcome to your Expo app 👋
+# 🐾 Centro Médico Mr. Patitas — Gestión de solicitudes de atención
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App móvil (React Native + Expo) para registrar y gestionar las solicitudes de atención de una clínica veterinaria
+(consultas, vacunación, emergencias y grooming). Evaluación parcial — Desarrollo de Aplicaciones Móviles 1 (IDAT).
 
-## Get started
+> Los datos viven **en memoria** (useReducer + Context). No usa base de datos: al cerrar la app se reinician.
 
-1. Install dependencies
+## Requisitos
 
-   ```bash
-   npm install
-   ```
+- Node.js 20 o superior y npm
+- Android Studio con un emulador (AVD) creado **o** un celular Android con "Depuración USB"
+  (en iOS: Xcode + simulador, solo macOS)
+- Variables de entorno `ANDROID_HOME` y `platform-tools` en el `PATH` (para que funcione `adb`)
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Instalación
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Ejecución
 
-### Other setup steps
+1. Abre el emulador desde Android Studio (Device Manager ▶) y espera a que cargue el home de Android.
+2. Verifica que esté en línea: `adb devices` debe mostrar `emulator-5554   device`.
+3. Inicia la app:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npx expo start --android     # emulador / dispositivo Android
+npx expo start --ios         # simulador iOS (macOS)
+```
 
-## Learn more
+Alternativa: `npx expo start` y presionar `a` (Android) o `i` (iOS). También puedes escanear el QR con Expo Go.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Cómo probar el flujo CRUD
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+| Acción | Cómo probarla |
+|---|---|
+| **Listar** | Pantalla de bienvenida → **Ingresar**. Verás 4 solicitudes de ejemplo. |
+| **Buscar / Filtrar** | Escribe en el buscador (mascota, cliente o teléfono) y usa los chips Todos / Pendiente / En atención / Finalizado. |
+| **Crear** | Botón **＋ Nueva solicitud** → deja campos vacíos para ver las validaciones bajo cada input → completa y **Registrar solicitud**. Aparece un toast y la solicitud nueva queda primera en la lista como *Pendiente*. |
+| **Ver detalle** | Toca cualquier tarjeta. |
+| **Actualizar** | En el detalle cambia **estado**, **prioridad** o **descripción** → **Guardar cambios**. Vuelve a la lista y verás el chip actualizado. |
+| **Eliminar** | Botón **Eliminar** en la tarjeta o en el detalle → confirma en el diálogo. |
+| **Refrescar** | Desliza la lista hacia abajo (simula recarga). |
 
-## Join the community
+## Arquitectura
 
-Join our community of developers creating universal apps.
+```
+src/
+├── app/          Rutas de Expo Router (delgadas: solo enlazan URL → pantalla)
+├── screens/      Pantallas (presentación): Bienvenida, Listado, Crear, Detalle/Editar
+├── components/   Componentes reutilizables: SolicitudCard, Chip, FormField, OptionSelector,
+│                 SearchBar, FilterChips, PrimaryButton, ServicioIcon, EmptyState
+├── store/        Estado global: solicitudReducer (lógica del CRUD), SolicitudContext, ToastContext
+├── services/     solicitudService: simula la capa de datos/API (carga inicial, refresco, creación)
+├── models/       Tipos: Solicitud, EstadoSolicitud, Prioridad, TipoServicio
+└── utils/        theme (diseño), constants, validators, format, alerts
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+**Flujo de datos:** Pantalla → acción del Context (`agregarSolicitud`, …) → `dispatch` → `solicitudReducer` → nuevo estado → re-render.
+Las pantallas no contienen lógica de negocio: validaciones en `utils/validators`, reglas del CRUD en el reducer, datos en `services`.
+
+**Hooks usados:** `useState` (formularios, filtros), `useEffect` (carga inicial simulada), `useReducer` + `Context` (CRUD en memoria),
+`useMemo`/`useCallback` (filtros y acciones).
+
+## Modelo de datos
+
+`Solicitud { id, clienteNombre, telefono, mascotaNombre, tipoServicio, prioridad, descripcion, estado, fechaRegistro }`
+— Estados: `PENDIENTE`, `EN_ATENCION`, `FINALIZADO`.
+
+## Solución de problemas: `adb.exe: device offline`
+
+```bash
+adb kill-server
+adb start-server
+adb devices        # debe decir "device", no "offline"
+```
+Si sigue offline: en Device Manager → ⋮ → **Cold Boot Now** (o **Wipe Data**), cierra otros emuladores y actualiza
+*Android Emulator* y *Platform-Tools* en SDK Manager.
+
+## Integrantes
+
+- _Nombre 1_
+- _Nombre 2_
+- _Nombre 3_
