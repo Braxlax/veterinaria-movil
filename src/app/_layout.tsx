@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
 import { SolicitudProvider } from '../store/SolicitudContext';
 import { ToastProvider } from '../store/ToastContext';
 import { CLINICA_NOMBRE } from '../utils/constants';
