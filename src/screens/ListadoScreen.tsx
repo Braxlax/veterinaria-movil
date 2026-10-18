@@ -72,7 +72,6 @@ export default function ListadoScreen() {
     <View style={styles.container}>
       <View style={styles.top}>
   <ResumenEstados solicitudes={solicitudes} />
-  <SearchBar value={busqueda} onChangeText={setBusqueda} />
         <SearchBar value={busqueda} onChangeText={setBusqueda} />
         <FilterChips options={opciones} selected={filtro} onSelect={setFiltro} />
       </View>
