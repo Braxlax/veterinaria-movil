@@ -15,7 +15,6 @@ interface Props<T extends string> {
   onSelect: (value: T) => void;
 }
 
-/** Grupo de opciones tipo "chip" seleccionable (servicio, prioridad, estado). */
 export function OptionSelector<T extends string>({ label, options, selected, onSelect }: Props<T>) {
   return (
     <View style={styles.wrapper}>

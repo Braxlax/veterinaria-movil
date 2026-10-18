@@ -14,7 +14,6 @@ export type SolicitudAction =
 
 export const initialState: SolicitudState = { solicitudes: [], cargando: true };
 
-/** Reducer puro: toda la lógica del CRUD en memoria vive aquí, fuera de la interfaz. */
 export function solicitudReducer(state: SolicitudState, action: SolicitudAction): SolicitudState {
   switch (action.type) {
     case 'CARGANDO':

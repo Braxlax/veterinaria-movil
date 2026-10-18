@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    borderLeftWidth: 6, // la barra de color indica la prioridad
+    borderLeftWidth: 6, 
     ...shadow.card,
   },
   pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },

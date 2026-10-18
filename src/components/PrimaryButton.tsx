@@ -35,7 +35,7 @@ export function PrimaryButton({ title, onPress, variant = 'primary', loading = f
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52, // área táctil cómoda (>= 48dp)
+    minHeight: 52, 
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',

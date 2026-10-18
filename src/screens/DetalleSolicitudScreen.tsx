@@ -24,7 +24,6 @@ export default function DetalleSolicitudScreen() {
   const toast = useToast();
   const { obtenerPorId, actualizarSolicitud, eliminarSolicitud } = useSolicitudes();
 
-  // La pantalla lee siempre la solicitud desde el store (única fuente de verdad)
   const solicitud = obtenerPorId(id ?? '');
 
   const [estado, setEstado] = useState<EstadoSolicitud>(solicitud?.estado ?? 'PENDIENTE');
@@ -69,7 +68,6 @@ export default function DetalleSolicitudScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Resumen (solo lectura) */}
         <View style={styles.summary}>
           <View style={styles.summaryHeader}>
             <ServicioIcon tipo={solicitud.tipoServicio} size={56} />
@@ -87,7 +85,6 @@ export default function DetalleSolicitudScreen() {
           <Fila label="Registrada" value={formatearFecha(solicitud.fechaRegistro)} />
         </View>
 
-        {/* Edición */}
         <Text style={styles.section}>Actualizar solicitud</Text>
         <OptionSelector
           label="Estado de atención"

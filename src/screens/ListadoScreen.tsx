@@ -54,7 +54,6 @@ export default function ListadoScreen() {
     return ordenarSolicitudes(resultado)
   }, [solicitudes, busqueda, filtro]);
 
-  // Simula "refrescar" la lista (pull to refresh)
   const onRefresh = useCallback(async () => {
     setRefrescando(true);
     await solicitudService.refrescar();

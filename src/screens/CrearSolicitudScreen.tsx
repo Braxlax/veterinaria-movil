@@ -18,7 +18,7 @@ export default function CrearSolicitudScreen() {
   const toast = useToast();
   const { agregarSolicitud } = useSolicitudes();
 
-  // useState: estado local del formulario
+  
   const [values, setValues] = useState<FormValues>({
     clienteNombre: '',
     telefono: '',
@@ -33,7 +33,6 @@ export default function CrearSolicitudScreen() {
   const setCampo = (campo: keyof FormValues) => (texto: string) => {
     const nuevos = { ...values, [campo]: texto };
     setValues(nuevos);
-    // Una vez que el usuario intentó enviar, valida en vivo para limpiar los errores al corregir
     if (intentoEnvio) setErrors(validarFormulario(nuevos));
   };
 
