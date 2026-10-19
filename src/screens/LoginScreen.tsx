@@ -1,16 +1,10 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { useAuth } from '../store/AuthContext';
 import { validarCredenciales } from '../utils/auth';
 import { CLINICA_NOMBRE } from '../utils/constants';
 import { colors, radius, spacing } from '../utils/theme';
@@ -18,10 +12,13 @@ import { colors, radius, spacing } from '../utils/theme';
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
+
+  const { iniciarSesion } = useAuth();
 
   const handleLogin = () => {
     if (!usuario.trim() || !contrasena) {
@@ -35,18 +32,21 @@ export default function LoginScreen() {
     }
 
     setError('');
-    router.replace('/solicitudes');
+
+    iniciarSesion();
+
+    router.replace('/home');
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.container,
-          { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xxl },
+          {
+            paddingTop: insets.top + spacing.xxl,
+            paddingBottom: insets.bottom + spacing.xxl,
+          },
         ]}
         keyboardShouldPersistTaps="handled"
       >
@@ -54,6 +54,7 @@ export default function LoginScreen() {
           <View style={styles.logo}>
             <Text style={styles.logoEmoji}>🐾</Text>
           </View>
+
           <Text style={styles.clinicName}>{CLINICA_NOMBRE}</Text>
           <Text style={styles.subtitle}>Gestión de atención veterinaria</Text>
         </View>
@@ -67,7 +68,7 @@ export default function LoginScreen() {
             required
             placeholder="Ingresa tu usuario"
             value={usuario}
-            onChangeText={(value) => {
+            onChangeText={value => {
               setUsuario(value);
               setError('');
             }}
@@ -81,7 +82,7 @@ export default function LoginScreen() {
             required
             placeholder="Ingresa tu contraseña"
             value={contrasena}
-            onChangeText={(value) => {
+            onChangeText={value => {
               setContrasena(value);
               setError('');
             }}
@@ -92,17 +93,18 @@ export default function LoginScreen() {
             returnKeyType="done"
           />
 
-          <Text
-            accessibilityRole="button"
-            onPress={() => setMostrarContrasena((actual) => !actual)}
-            style={styles.showPassword}
-          >
+          <Text accessibilityRole="button" onPress={() => setMostrarContrasena(actual => !actual)} style={styles.showPassword}>
             {mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           </Text>
 
-          {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+          {error ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {error}
+            </Text>
+          ) : null}
 
           <PrimaryButton title="Iniciar sesión" onPress={handleLogin} style={styles.loginButton} />
+
           <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
         </View>
       </ScrollView>
@@ -111,13 +113,19 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.primary },
+  flex: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
-  header: { alignItems: 'center', marginBottom: spacing.xxl },
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xxl,
+  },
   logo: {
     width: 92,
     height: 92,
@@ -127,7 +135,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.lg,
   },
-  logoEmoji: { fontSize: 46 },
+  logoEmoji: {
+    fontSize: 46,
+  },
   clinicName: {
     fontSize: 25,
     fontWeight: '800',
@@ -145,7 +155,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.xl,
   },
-  title: { color: colors.text, fontSize: 24, fontWeight: '800', textAlign: 'center' },
+  title: {
+    color: colors.text,
+    fontSize: 24,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
   description: {
     color: colors.textMuted,
     fontSize: 14,
@@ -168,7 +183,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.md,
   },
-  loginButton: { marginTop: spacing.sm },
+  loginButton: {
+    marginTop: spacing.sm,
+  },
   footnote: {
     color: colors.textMuted,
     fontSize: 12,

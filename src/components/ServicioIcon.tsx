@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TipoServicio } from '../models/solicitud';
 import { SERVICIO_INFO } from '../utils/constants';
