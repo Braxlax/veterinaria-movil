@@ -1,15 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '../components/EmptyState';
@@ -18,11 +9,7 @@ import { ResumenEstados } from '../components/ResumenEstados';
 import { SearchBar } from '../components/SearchBar';
 import { SolicitudCard } from '../components/SolicitudCard';
 
-import {
-  ESTADOS,
-  EstadoSolicitud,
-  Solicitud,
-} from '../models/solicitud';
+import { ESTADOS, EstadoSolicitud, Solicitud } from '../models/solicitud';
 
 import { solicitudService } from '../services/solicitudService';
 import { useSolicitudes } from '../store/SolicitudContext';
@@ -39,9 +26,7 @@ export default function ListadoScreen() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
 
-
-  const { solicitudes, cargando, eliminarSolicitud } =
-    useSolicitudes();
+  const { solicitudes, cargando, eliminarSolicitud } = useSolicitudes();
 
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('TODOS');
@@ -54,23 +39,20 @@ export default function ListadoScreen() {
         label: 'Todos',
         count: solicitudes.length,
       },
-      ...ESTADOS.map((estado) => ({
+      ...ESTADOS.map(estado => ({
         value: estado as Filtro,
         label: ESTADO_INFO[estado].label,
-        count: solicitudes.filter(
-          (solicitud) => solicitud.estado === estado
-        ).length,
+        count: solicitudes.filter(solicitud => solicitud.estado === estado).length,
       })),
     ],
-    [solicitudes]
+    [solicitudes],
   );
 
   const filtradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
 
-    const resultado = solicitudes.filter((solicitud) => {
-      const coincideEstado =
-        filtro === 'TODOS' || solicitud.estado === filtro;
+    const resultado = solicitudes.filter(solicitud => {
+      const coincideEstado = filtro === 'TODOS' || solicitud.estado === filtro;
 
       const coincideTexto =
         !q ||
@@ -100,85 +82,58 @@ export default function ListadoScreen() {
   const onEliminar = (solicitud: Solicitud) => {
     confirmarEliminacion(solicitud.mascotaNombre, () => {
       eliminarSolicitud(solicitud.id);
-      toast(
-        `Solicitud de ${solicitud.mascotaNombre} eliminada`,
-        'success'
-      );
+      toast(`Solicitud de ${solicitud.mascotaNombre} eliminada`, 'success');
     });
   };
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Image
-          source={require('../../assets/images/favicon.png')}
-          style={{ width: 70, height: 70 }}
-          resizeMode="contain"
-        />
+        <Image source={require('../../assets/images/favicon.png')} style={styles.headerLogo} resizeMode="contain" />
 
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>
-            Centro  Médico Mr. Patitas
-          </Text>
+          <Text style={styles.headerTitle}>Centro Médico Mr. Patitas</Text>
 
-          <Text style={styles.headerSubtitle}>
-            Gestión de solicitudes veterinarias
-          </Text>
+          <Text style={styles.headerSubtitle}>Gestión de solicitudes veterinarias</Text>
         </View>
       </View>
 
       <View style={styles.container}>
+        {/* Botón Salir en la parte superior derecha */}
+        <Pressable
+          onPress={() => router.replace('/')}
+          accessibilityRole="button"
+          accessibilityLabel="Salir y volver al inicio"
+          style={({ pressed }) => [styles.homeButton, pressed && styles.fabPressed]}
+        >
+          <Text style={styles.homeButtonText}>Salir</Text>
+        </Pressable>
+
         <View style={styles.top}>
           <ResumenEstados solicitudes={solicitudes} />
 
-          <SearchBar
-            value={busqueda}
-            onChangeText={setBusqueda}
-          />
+          <SearchBar value={busqueda} onChangeText={setBusqueda} />
 
-          <FilterChips
-            options={opciones}
-            selected={filtro}
-            onSelect={setFiltro}
-          />
+          <FilterChips options={opciones} selected={filtro} onSelect={setFiltro} />
         </View>
 
         {cargando ? (
           <View style={styles.loading}>
-            <ActivityIndicator
-              size="large"
-              color="#78943B"
-            />
+            <ActivityIndicator size="large" color="#78943B" />
 
-            <Text style={styles.loadingText}>
-              Cargando solicitudes...
-            </Text>
+            <Text style={styles.loadingText}>Cargando solicitudes...</Text>
           </View>
         ) : (
           <FlatList
             data={filtradas}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={[
-              styles.list,
-              { paddingBottom: insets.bottom + 100 },
-            ]}
-            refreshControl={
-              <RefreshControl
-                refreshing={refrescando}
-                onRefresh={onRefresh}
-                colors={['#78943B']}
-                tintColor="#78943B"
-              />
-            }
+            keyExtractor={item => item.id}
+            contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
+            refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} colors={['#78943B']} tintColor="#78943B" />}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <EmptyState
                 icon="🐶"
-                title={
-                  solicitudes.length === 0
-                    ? 'Aún no hay solicitudes'
-                    : 'Sin resultados'
-                }
+                title={solicitudes.length === 0 ? 'Aún no hay solicitudes' : 'Sin resultados'}
                 message={
                   solicitudes.length === 0
                     ? 'Toca “Nueva solicitud” para registrar la primera.'
@@ -200,57 +155,23 @@ export default function ListadoScreen() {
             )}
           />
         )}
-        <Pressable
-          onPress={() => router.replace('/')}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.homeButton,
-            { bottom: insets.bottom +15 },
-            pressed && styles.fabPressed,
-          ]}
-        >
-          <Text style={styles.homeButtonText}>← Volver al inicio</Text>
-        </Pressable>
 
+        {/* Botón para registrar una nueva solicitud */}
         <Pressable
           onPress={() => router.push('/crear')}
           accessibilityRole="button"
           accessibilityLabel="Nueva solicitud"
-          style={({ pressed }) => [
-            styles.fab,
-            { bottom: insets.bottom + spacing.lg },
-            pressed && styles.fabPressed,
-          ]}
+          style={({ pressed }) => [styles.fab, { bottom: insets.bottom + spacing.lg }, pressed && styles.fabPressed]}
         >
           <Text style={styles.fabPlus}>+</Text>
           <Text style={styles.fabText}>Nueva solicitud</Text>
         </Pressable>
-        </View></View>
-        
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
- 
-homeButton: {
-  position: 'relative',
-  right: spacing.lg-17,
-  backgroundColor: '#78943b',
-  paddingVertical: 15,
-  paddingHorizontal: 22,
-  borderRadius: 82,
-  alignItems: 'center',
-  justifyContent: 'center',
-  alignSelf: 'flex-start',
-  elevation: 5,
-},
-
-homeButtonText: {
-  color: '#FFFFFF',
-  fontSize: 15,
-  fontWeight: 'bold',
-},
-
   screen: {
     flex: 1,
     backgroundColor: '#b3904b',
@@ -264,7 +185,7 @@ homeButtonText: {
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 2,
@@ -293,9 +214,29 @@ homeButtonText: {
     marginTop: 4,
   },
 
+  homeButton: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.lg,
+    zIndex: 10,
+    backgroundColor: '#DC2626',
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+
+  homeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+
   top: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xxl + spacing.lg,
     paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
@@ -323,7 +264,7 @@ homeButtonText: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: '#78943b',
+    backgroundColor: '#78943B',
     paddingHorizontal: spacing.xl,
     minHeight: 54,
     borderRadius: radius.pill,
@@ -349,7 +290,7 @@ homeButtonText: {
   },
 
   fabText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
   },
