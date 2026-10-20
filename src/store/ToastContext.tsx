@@ -19,6 +19,7 @@ const BG: Record<ToastType, string> = {
 };
 const ICON: Record<ToastType, string> = { success: '✓', error: '✕', info: 'ℹ' };
 
+/** Feedback de acciones (toast) visible en cualquier pantalla. */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastData | null>(null);
   const anim = useRef(new Animated.Value(0)).current;

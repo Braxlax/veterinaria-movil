@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# veterinaria-movil
-aplicación móvil para el curso de desarrollo de aplicaciones móvil 1
-=======
 # 🐾 Centro Médico Mr. Patitas — Gestión de solicitudes de atención
 
 App móvil (React Native + Expo) para registrar y gestionar las solicitudes de atención de una clínica veterinaria
@@ -84,7 +80,6 @@ Si sigue offline: en Device Manager → ⋮ → **Cold Boot Now** (o **Wipe Data
 
 ## Integrantes
 
-- _Nombre 1_
-- _Nombre 2_
-- _Nombre 3_
->>>>>>> master
+- _Katiuska Rodriguez Toro _
+- _Edwars Badajos Rojas_
+- _Ariana Camila Oortiz Ruiz  _

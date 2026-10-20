@@ -1,5 +1,6 @@
 import { Alert } from 'react-native';
 
+/** Diálogo de confirmación antes de eliminar (requisito de UX de la rúbrica). */
 export const confirmarEliminacion = (mascota: string, onConfirm: () => void) => {
   Alert.alert(
     'Eliminar solicitud',

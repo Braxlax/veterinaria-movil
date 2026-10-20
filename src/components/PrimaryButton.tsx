@@ -1,4 +1,3 @@
-import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 import { colors, radius, spacing } from '../utils/theme';
 
@@ -35,13 +34,13 @@ export function PrimaryButton({ title, onPress, variant = 'primary', loading = f
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52, 
+    minHeight: 52, // área táctil cómoda (>= 48dp)
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
-  primary: { backgroundColor: colors.primary },
+  primary: { backgroundColor: '#78943B' },/*color del boton de inicion de sesion */
   outline: { borderWidth: 1.5, borderColor: colors.primary, backgroundColor: 'transparent' },
   danger: { borderWidth: 1.5, borderColor: colors.danger, backgroundColor: colors.dangerSoft },
   pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },

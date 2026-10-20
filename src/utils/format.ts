@@ -1,3 +1,4 @@
+/** Formatea una fecha ISO a "10/10/2026 14:35" sin depender de Intl del dispositivo. */
 export const formatearFecha = (iso: string): string => {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;

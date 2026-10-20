@@ -1,4 +1,3 @@
-import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radius, spacing } from '../utils/theme';
 
@@ -14,7 +13,7 @@ export function SearchBar({ value, onChangeText }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Buscar por mascota, cliente o teléfono"
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor="#a7a7a8"
         value={value}
         onChangeText={onChangeText}
         autoCorrect={false}

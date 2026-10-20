@@ -15,6 +15,7 @@ const SolicitudContext = createContext<SolicitudContextValue | null>(null);
 export function SolicitudProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(solicitudReducer, initialState);
 
+  // useEffect: carga inicial de datos (simulada) al abrir la app
   useEffect(() => {
     let activo = true;
     dispatch({ type: 'CARGANDO' });

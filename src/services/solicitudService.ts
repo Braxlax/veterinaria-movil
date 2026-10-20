@@ -1,5 +1,9 @@
 import { NuevaSolicitud, Solicitud } from '../models/solicitud';
 
+/**
+ * Capa de "servicios/datos". No hay base de datos: se simula una API
+ * con datos en memoria y retardos, para poder usar useEffect + estado de carga.
+ */
 const esperar = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const hace = (minutos: number) => new Date(Date.now() - minutos * 60_000).toISOString();
@@ -52,15 +56,18 @@ const DATOS_INICIALES: Solicitud[] = [
 ];
 
 export const solicitudService = {
+  /** Simula la carga inicial desde un servidor. */
   async obtenerTodas(): Promise<Solicitud[]> {
     await esperar(700);
     return DATOS_INICIALES.map((s) => ({ ...s }));
   },
 
+  /** Simula "pull to refresh". */
   async refrescar(): Promise<void> {
     await esperar(800);
   },
 
+  /** Construye una solicitud completa (id, estado y fecha los asigna el sistema). */
   crear(datos: NuevaSolicitud): Solicitud {
     return {
       ...datos,
