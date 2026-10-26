@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '../components/EmptyState';
@@ -91,27 +91,36 @@ export default function ListadoScreen() {
 
   return (
     <View style={styles.screen}>
+      {/* Encabezado: tocar el logo o título lleva al Home */}
       <View style={styles.header}>
-        <Image source={require('../../assets/images/favicon.png')} style={styles.headerLogo} resizeMode="contain" />
+        <TouchableOpacity
+          style={styles.headerBrand}
+          activeOpacity={0.7}
+          onPress={() => router.replace('/home')}
+          accessibilityRole="button"
+          accessibilityLabel="Ir al inicio"
+        >
+          <Image source={require('../../assets/images/favicon.png')} style={styles.headerLogo} resizeMode="contain" />
 
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>Centro Médico Mr. Patitas</Text>
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerTitle}>Centro Médico Mr. Patitas</Text>
 
-          <Text style={styles.headerSubtitle}>Gestión de solicitudes veterinarias</Text>
-        </View>
-      </View>
+            <Text style={styles.headerSubtitle}>Gestión de solicitudes veterinarias</Text>
+          </View>
+        </TouchableOpacity>
 
-      <View style={styles.container}>
-        {/* Botón Salir en la parte superior derecha */}
+        {/* Botón Salir */}
         <Pressable
           onPress={() => { cerrarSesion(); router.replace('/'); }}
           accessibilityRole="button"
-          accessibilityLabel="Salir y volver al inicio"
+          accessibilityLabel="Salir y volver al inicio de sesión"
           style={({ pressed }) => [styles.homeButton, pressed && styles.fabPressed]}
         >
           <Text style={styles.homeButtonText}>Salir</Text>
         </Pressable>
+      </View>
 
+      <View style={styles.container}>
         <View style={styles.top}>
           <ResumenEstados solicitudes={solicitudes} />
 
@@ -189,16 +198,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 2,
     borderBottomColor: '#90c420',
-    gap: spacing.md,
+    gap: spacing.sm,
+  },
+
+  headerBrand: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
 
   headerLogo: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
   },
 
   headerInfo: {
@@ -207,39 +223,34 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     color: '#526b2f',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
   },
 
   headerSubtitle: {
     color: '#777765',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
 
   homeButton: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.lg,
-    zIndex: 10,
     backgroundColor: '#DC2626',
     paddingVertical: 9,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
   },
 
   homeButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 
   top: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl + spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
