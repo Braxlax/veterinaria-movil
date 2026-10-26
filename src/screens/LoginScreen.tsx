@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FormField } from '../components/FormField';
-import { validarCredenciales } from '../utils/auth';
+import { autenticar } from '../utils/auth';
+import { useAuth } from '../store/AuthContext';
 import { colors, radius, spacing } from '../utils/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { iniciarSesion } = useAuth();
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
@@ -20,11 +22,13 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!validarCredenciales(usuario, contrasena)) {
+    const cuenta = autenticar(usuario, contrasena);
+    if (!cuenta) {
       setError('Usuario o contraseña incorrectos.');
       return;
     }
 
+    iniciarSesion({ usuario: cuenta.usuario, rol: cuenta.rol });
     setError('');
     router.replace('/home');
   };
@@ -98,6 +102,8 @@ export default function LoginScreen() {
           </View>
         </Pressable>
         <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
+        <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>¿No tienes cuenta? Regístrate</Text>
+        <Text style={styles.demo}>Demo: admin / patitas123 · usuario / usuario123</Text>
       </View>
     </ImageBackground>
   );
@@ -232,6 +238,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   loginButton: { marginTop: spacing.sm },
+  registerLink: { color: colors.primary, fontSize: 14, fontWeight: '700', textAlign: 'center', marginTop: spacing.md, paddingVertical: spacing.xs },
+  demo: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: spacing.sm },
   footnote: {
     color: colors.textMuted,
     fontSize: 12,

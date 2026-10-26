@@ -14,6 +14,7 @@ import { ESTADOS, EstadoSolicitud, Solicitud } from '../models/solicitud';
 import { solicitudService } from '../services/solicitudService';
 import { useSolicitudes } from '../store/SolicitudContext';
 import { useToast } from '../store/ToastContext';
+import { useAuth } from '../store/AuthContext';
 import { confirmarEliminacion } from '../utils/alerts';
 import { ESTADO_INFO } from '../utils/constants';
 import { ordenarSolicitudes } from '../utils/ordenar';
@@ -25,6 +26,8 @@ export default function ListadoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const { usuarioActual, cerrarSesion } = useAuth();
+  const esAdmin = usuarioActual?.rol === 'admin';
 
   const { solicitudes, cargando, eliminarSolicitud } = useSolicitudes();
 
@@ -101,7 +104,7 @@ export default function ListadoScreen() {
       <View style={styles.container}>
         {/* Botón Salir en la parte superior derecha */}
         <Pressable
-          onPress={() => router.replace('/')}
+          onPress={() => { cerrarSesion(); router.replace('/'); }}
           accessibilityRole="button"
           accessibilityLabel="Salir y volver al inicio"
           style={({ pressed }) => [styles.homeButton, pressed && styles.fabPressed]}
@@ -150,14 +153,14 @@ export default function ListadoScreen() {
                     params: { id: item.id },
                   })
                 }
-                onDelete={() => onEliminar(item)}
+                onDelete={esAdmin ? () => onEliminar(item) : undefined}
               />
             )}
           />
         )}
 
         {/* Botón para registrar una nueva solicitud */}
-        <Pressable
+        {esAdmin ? <Pressable
           onPress={() => router.push('/crear')}
           accessibilityRole="button"
           accessibilityLabel="Nueva solicitud"
@@ -165,7 +168,7 @@ export default function ListadoScreen() {
         >
           <Text style={styles.fabPlus}>+</Text>
           <Text style={styles.fabText}>Nueva solicitud</Text>
-        </Pressable>
+        </Pressable> : null}
       </View>
     </View>
   );

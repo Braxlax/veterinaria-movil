@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { useAuth } from '../store/AuthContext';
 import { TIPOS_SERVICIO } from '../models/solicitud';
 import { CLINICA_NOMBRE, SERVICIO_INFO } from '../utils/constants';
 import { radius, spacing } from '../utils/theme';
@@ -9,6 +11,12 @@ import { radius, spacing } from '../utils/theme';
 export default function BienvenidaScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { usuarioActual, cerrarSesion } = useAuth();
+  const esAdmin = usuarioActual?.rol === 'admin';
+
+  useEffect(() => {
+    if (!usuarioActual) router.replace('/');
+  }, [usuarioActual, router]);
 
   return (
     <ScrollView
@@ -27,7 +35,8 @@ export default function BienvenidaScreen() {
           <Image source={require('../../assets/images/tabIcons/mr.patitas.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
-        <Text style={styles.welcome}>¡Bienvenido!</Text>
+        <Text style={styles.welcome}>¡Bienvenido{usuarioActual ? `, ${usuarioActual.usuario}` : ''}!</Text>
+        <Text style={styles.role}>Perfil: {esAdmin ? 'Administrador' : 'Usuario'}</Text>
 
         <Text style={styles.title}>{CLINICA_NOMBRE}</Text>
 
@@ -49,12 +58,13 @@ export default function BienvenidaScreen() {
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>¿Qué deseas hacer hoy?</Text>
 
-        <Text style={styles.hint}>Administra las solicitudes de atención de tus clientes desde un solo lugar.</Text>
+        <Text style={styles.hint}>{esAdmin ? 'Administra y consulta las solicitudes de atención desde un solo lugar.' : 'Consulta las solicitudes de atención veterinaria registradas.'}</Text>
 
         <View style={styles.buttons}>
           <PrimaryButton title="Consultar solicitudes" onPress={() => router.push('/solicitudes')} style={styles.homeButton} />
 
-          <PrimaryButton title="Registrar nueva solicitud" onPress={() => router.push('/crear')} style={styles.homeButton} />
+          {esAdmin ? <PrimaryButton title="Registrar nueva solicitud" onPress={() => router.push('/crear')} style={styles.homeButton} /> : null}
+          <PrimaryButton title="Cerrar sesión" variant="outline" onPress={() => { cerrarSesion(); router.replace('/'); }} style={styles.homeButton} />
         </View>
       </View>
 
@@ -105,6 +115,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
   },
+  role: { fontSize: 13, color: '#FFF9ED', fontWeight: '700', marginTop: spacing.xs },
   subtitle: {
     fontSize: 16,
     color: '#FFF9ED',

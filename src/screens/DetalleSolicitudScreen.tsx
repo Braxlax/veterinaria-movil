@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EstadoChip, PrioridadChip } from '../components/Chip';
 import { EmptyState } from '../components/EmptyState';
@@ -8,7 +8,8 @@ import { FormField } from '../components/FormField';
 import { OptionSelector } from '../components/OptionSelector';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ServicioIcon } from '../components/ServicioIcon';
-import { EstadoSolicitud, ESTADOS, Prioridad, PRIORIDADES } from '../models/solicitud';
+import { ESTADOS, EstadoSolicitud, Prioridad, PRIORIDADES } from '../models/solicitud';
+import { useAuth } from '../store/AuthContext';
 import { useSolicitudes } from '../store/SolicitudContext';
 import { useToast } from '../store/ToastContext';
 import { confirmarEliminacion } from '../utils/alerts';
@@ -17,11 +18,14 @@ import { formatearFecha } from '../utils/format';
 import { colors, radius, shadow, spacing } from '../utils/theme';
 import { validarDescripcion } from '../utils/validators';
 
+
 export default function DetalleSolicitudScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const { usuarioActual } = useAuth();
+  const esAdmin = usuarioActual?.rol === 'admin';
   const { obtenerPorId, actualizarSolicitud, eliminarSolicitud } = useSolicitudes();
 
   // La pantalla lee siempre la solicitud desde el store (única fuente de verdad)
@@ -69,6 +73,16 @@ export default function DetalleSolicitudScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
         keyboardShouldPersistTaps="handled"
       >
+
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Volver a las solicitudes"
+        >
+          <Text style={styles.backButtonText}>← Volver a las solicitudes</Text>
+        </Pressable>
+
         {/* Resumen (solo lectura) */}
         <View style={styles.summary}>
           <View style={styles.summaryHeader}>
@@ -87,32 +101,18 @@ export default function DetalleSolicitudScreen() {
           <Fila label="Registrada" value={formatearFecha(solicitud.fechaRegistro)} />
         </View>
 
-        {/* Edición */}
-        <Text style={styles.section}>Actualizar solicitud</Text>
-        <OptionSelector
-          label="Estado de atención"
-          selected={estado}
-          onSelect={setEstado}
-          options={ESTADOS.map((e) => ({ value: e, label: ESTADO_INFO[e].label }))}
-        />
-        <OptionSelector
-          label="Prioridad"
-          selected={prioridad}
-          onSelect={setPrioridad}
-          options={PRIORIDADES.map((p) => ({ value: p, label: PRIORIDAD_INFO[p].label }))}
-        />
-        <FormField
-          label="Descripción"
-          required
-          multiline
-          maxLength={300}
-          value={descripcion}
-          onChangeText={onChangeDescripcion}
-          error={error}
-        />
-
-        <PrimaryButton title={hayCambios ? 'Guardar cambios' : 'Sin cambios'} onPress={handleGuardar} />
-        <PrimaryButton title="🗑 Eliminar solicitud" variant="danger" onPress={handleEliminar} style={styles.delete} />
+        {esAdmin ? <>
+          <Text style={styles.section}>Actualizar solicitud</Text>
+          <OptionSelector label="Estado de atención" selected={estado} onSelect={setEstado} options={ESTADOS.map((e) => ({ value: e, label: ESTADO_INFO[e].label }))} />
+          <OptionSelector label="Prioridad" selected={prioridad} onSelect={setPrioridad} options={PRIORIDADES.map((p) => ({ value: p, label: PRIORIDAD_INFO[p].label }))} />
+          <FormField label="Descripción" required multiline maxLength={300} value={descripcion} onChangeText={onChangeDescripcion} error={error} />
+          <PrimaryButton title={hayCambios ? 'Guardar cambios' : 'Sin cambios'} onPress={handleGuardar} />
+          <PrimaryButton title="🗑 Eliminar solicitud" variant="danger" onPress={handleEliminar} style={styles.delete} />
+        </> : <View style={styles.readOnlyBox}>
+          <Text style={styles.section}>Descripción de la solicitud</Text>
+          <Text style={styles.readOnlyText}>{solicitud.descripcion}</Text>
+          <Text style={styles.readOnlyNote}>Modo consulta: tu perfil no permite editar ni eliminar solicitudes.</Text>
+        </View>}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -128,6 +128,17 @@ const Fila = ({ label, value }: { label: string; value: string }) => (
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#526b2f',
+  },
   summary: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -152,4 +163,7 @@ const styles = StyleSheet.create({
   filaValue: { fontSize: 14, fontWeight: '600', color: colors.text, flexShrink: 1, textAlign: 'right' },
   section: { fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: spacing.md },
   delete: { marginTop: spacing.md },
+  readOnlyBox: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+  readOnlyText: { color: colors.text, fontSize: 15, lineHeight: 22 },
+  readOnlyNote: { color: colors.textMuted, fontSize: 12, marginTop: spacing.md },
 });

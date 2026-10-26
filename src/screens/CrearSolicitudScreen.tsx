@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FormField } from '../components/FormField';
@@ -8,6 +8,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { Prioridad, PRIORIDADES, TipoServicio, TIPOS_SERVICIO } from '../models/solicitud';
 import { useSolicitudes } from '../store/SolicitudContext';
 import { useToast } from '../store/ToastContext';
+import { useAuth } from '../store/AuthContext';
 import { PRIORIDAD_INFO, SERVICIO_INFO } from '../utils/constants';
 import { colors, spacing } from '../utils/theme';
 import { FormErrors, FormValues, hayErrores, validarFormulario } from '../utils/validators';
@@ -16,6 +17,12 @@ export default function CrearSolicitudScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const { usuarioActual } = useAuth();
+  const esAdmin = usuarioActual?.rol === 'admin';
+
+  useEffect(() => {
+    if (!esAdmin) router.replace('/home');
+  }, [esAdmin, router]);
   const { agregarSolicitud } = useSolicitudes();
 
   // useState: estado local del formulario
@@ -38,6 +45,7 @@ export default function CrearSolicitudScreen() {
   };
 
   const handleGuardar = () => {
+    if (!esAdmin) { router.replace('/home'); return; }
     setIntentoEnvio(true);
     const errs = validarFormulario(values);
     setErrors(errs);
