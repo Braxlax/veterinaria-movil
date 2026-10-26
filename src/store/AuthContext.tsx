@@ -1,26 +1,39 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { RolUsuario } from '../utils/auth';
+import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
+import { authService } from '../services/authService';
+import { DatosRegistro, Sesion } from '../models/usuario';
+import { authInitialState, authReducer } from './authReducer';
 
-type UsuarioAutenticado = { usuario: string; rol: RolUsuario };
-type AuthContextType = {
+type Resultado = { ok: true } | { ok: false; mensaje: string };
+
+interface AuthContextType {
+  sesion: Sesion | null;
   autenticado: boolean;
-  usuarioActual: UsuarioAutenticado | null;
-  iniciarSesion: (usuario: UsuarioAutenticado) => void;
+  iniciarSesion: (usuario: string, contrasena: string) => Promise<Resultado>;
+  registrarCuenta: (datos: DatosRegistro) => Promise<Resultado>;
   cerrarSesion: () => void;
-};
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuarioActual, setUsuarioActual] = useState<UsuarioAutenticado | null>(null);
-  const iniciarSesion = (usuario: UsuarioAutenticado) => setUsuarioActual(usuario);
-  const cerrarSesion = () => setUsuarioActual(null);
+  const [state, dispatch] = useReducer(authReducer, authInitialState);
 
-  return (
-    <AuthContext.Provider value={{ autenticado: usuarioActual !== null, usuarioActual, iniciarSesion, cerrarSesion }}>
-      {children}
-    </AuthContext.Provider>
+  const iniciarSesion = useCallback(async (usuario: string, contrasena: string): Promise<Resultado> => {
+    const sesion = await authService.autenticar(usuario, contrasena);
+    if (!sesion) return { ok: false, mensaje: 'Usuario o contraseña incorrectos.' };
+    dispatch({ type: 'LOGIN', payload: sesion });
+    return { ok: true };
+  }, []);
+
+  const registrarCuenta = useCallback((datos: DatosRegistro) => authService.registrar(datos), []);
+  const cerrarSesion = useCallback(() => dispatch({ type: 'LOGOUT' }), []);
+
+  const value = useMemo(
+    () => ({ sesion: state.sesion, autenticado: state.sesion !== null, iniciarSesion, registrarCuenta, cerrarSesion }),
+    [state.sesion, iniciarSesion, registrarCuenta, cerrarSesion]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

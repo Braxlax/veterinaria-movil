@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { EstadoCita } from '../models/cita';
 import { EstadoSolicitud, Prioridad } from '../models/solicitud';
-import { ESTADO_INFO, PRIORIDAD_INFO } from '../utils/constants';
+import { ESTADO_CITA_INFO, ESTADO_INFO, PRIORIDAD_INFO } from '../utils/constants';
 import { radius, spacing } from '../utils/theme';
 
 interface BaseProps {
@@ -20,6 +21,7 @@ export function Chip({ label, bg, fg }: BaseProps) {
 }
 
 export const EstadoChip = ({ estado }: { estado: EstadoSolicitud }) => <Chip {...ESTADO_INFO[estado]} />;
+export const EstadoCitaChip = ({ estado }: { estado: EstadoCita }) => <Chip {...ESTADO_CITA_INFO[estado]} />;
 
 export const PrioridadChip = ({ prioridad }: { prioridad: Prioridad }) => (
   <Chip {...PRIORIDAD_INFO[prioridad]} label={`Prioridad ${PRIORIDAD_INFO[prioridad].label.toLowerCase()}`} />

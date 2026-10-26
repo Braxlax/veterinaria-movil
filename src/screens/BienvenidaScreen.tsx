@@ -1,33 +1,29 @@
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppIcon } from '../components/AppIcon';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { useAuth } from '../store/AuthContext';
+import { usePermisos } from '../hooks/usePermisos';
 import { TIPOS_SERVICIO } from '../models/solicitud';
+import { useAuth } from '../store/AuthContext';
+import { confirmar } from '../utils/alerts';
 import { CLINICA_NOMBRE, SERVICIO_INFO } from '../utils/constants';
-import { radius, spacing } from '../utils/theme';
+import { ROL_INFO } from '../utils/permisos';
+import { colors, radius, spacing } from '../utils/theme';
 
 export default function BienvenidaScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { usuarioActual, cerrarSesion } = useAuth();
-  const esAdmin = usuarioActual?.rol === 'admin';
+  const { sesion, cerrarSesion } = useAuth();
+  const { crearSolicitud } = usePermisos();
 
-  useEffect(() => {
-    if (!usuarioActual) router.replace('/');
-  }, [usuarioActual, router]);
+  const esCliente = sesion?.rol === 'cliente';
+  const rol = sesion ? ROL_INFO[sesion.rol] : null;
 
   return (
     <ScrollView
       style={styles.scroll}
-      contentContainerStyle={[
-        styles.container,
-        {
-          paddingTop: insets.top + spacing.xl,
-          paddingBottom: insets.bottom + spacing.xl,
-        },
-      ]}
+      contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.hero}>
@@ -35,20 +31,23 @@ export default function BienvenidaScreen() {
           <Image source={require('../../assets/images/tabIcons/mr.patitas.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
-        <Text style={styles.welcome}>¡Bienvenido{usuarioActual ? `, ${usuarioActual.usuario}` : ''}!</Text>
-        <Text style={styles.role}>Perfil: {esAdmin ? 'Administrador' : 'Usuario'}</Text>
-
+        <Text style={styles.welcome}>¡Bienvenido{sesion ? `, ${sesion.nombre}` : ''}!</Text>
         <Text style={styles.title}>{CLINICA_NOMBRE}</Text>
-
         <Text style={styles.subtitle}>Sistema de gestión de atención veterinaria</Text>
 
+        {rol ? (
+          <View style={styles.rolChip}>
+            <AppIcon name={rol.icon} size={16} color={colors.primaryDark} />
+            <Text style={styles.rolText}>{rol.label}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.services}>
-          {TIPOS_SERVICIO.map(t => (
+          {TIPOS_SERVICIO.map((t) => (
             <View key={t} style={styles.service}>
               <View style={[styles.serviceIcon, { backgroundColor: SERVICIO_INFO[t].color }]}>
-                <Text style={styles.serviceEmoji}>{SERVICIO_INFO[t].icon}</Text>
+                <AppIcon name={SERVICIO_INFO[t].icon} size={28} color={SERVICIO_INFO[t].fg} />
               </View>
-
               <Text style={styles.serviceLabel}>{SERVICIO_INFO[t].label}</Text>
             </View>
           ))}
@@ -57,14 +56,26 @@ export default function BienvenidaScreen() {
 
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>¿Qué deseas hacer hoy?</Text>
-
-        <Text style={styles.hint}>{esAdmin ? 'Administra y consulta las solicitudes de atención desde un solo lugar.' : 'Consulta las solicitudes de atención veterinaria registradas.'}</Text>
+        <Text style={styles.hint}>
+          {esCliente
+            ? 'Consulta el estado de tus solicitudes, pide atención para tu mascota o agenda una cita.'
+            : 'Administra las solicitudes de atención de tus clientes desde un solo lugar.'}
+        </Text>
 
         <View style={styles.buttons}>
-          <PrimaryButton title="Consultar solicitudes" onPress={() => router.push('/solicitudes')} style={styles.homeButton} />
-
-          {esAdmin ? <PrimaryButton title="Registrar nueva solicitud" onPress={() => router.push('/crear')} style={styles.homeButton} /> : null}
-          <PrimaryButton title="Cerrar sesión" variant="outline" onPress={() => { cerrarSesion(); router.replace('/'); }} style={styles.homeButton} />
+          <PrimaryButton
+            title={esCliente ? 'Consultar mis solicitudes' : 'Consultar solicitudes'}
+            icon="clipboard-text"
+            onPress={() => router.push('/solicitudes')}
+          />
+          {crearSolicitud ? <PrimaryButton title="Registrar nueva solicitud" icon="plus" onPress={() => router.push('/crear')} /> : null}
+          <PrimaryButton title="Ir a mi panel" icon="home-variant" variant="outline" onPress={() => router.push('/inicio')} />
+          <PrimaryButton
+            title="Cerrar sesión"
+            icon="logout"
+            variant="danger"
+            onPress={() => confirmar('Cerrar sesión', '¿Seguro que deseas salir de tu cuenta?', 'Cerrar sesión', cerrarSesion)}
+          />
         </View>
       </View>
 
@@ -74,113 +85,42 @@ export default function BienvenidaScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: '#7E9936',
-  },
-  container: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    justifyContent: 'space-between',
-  },
-  hero: {
-    alignItems: 'center',
-    marginTop: spacing.lg,
-  },
+  scroll: { flex: 1, backgroundColor: colors.primary },
+  container: { flexGrow: 1, paddingHorizontal: spacing.xl, justifyContent: 'space-between' },
+  hero: { alignItems: 'center', marginTop: spacing.lg },
   logoContainer: {
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: '#FFF9ED',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
     marginBottom: spacing.lg,
     overflow: 'hidden',
   },
-  logoImage: {
-    width: 140,
-    height: 140,
-  },
-  welcome: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFF9ED',
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  role: { fontSize: 13, color: '#FFF9ED', fontWeight: '700', marginTop: spacing.xs },
-  subtitle: {
-    fontSize: 16,
-    color: '#FFF9ED',
-    marginTop: spacing.sm,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  services: {
+  logoImage: { width: 140, height: 140 },
+  welcome: { fontSize: 22, fontWeight: '700', color: colors.background, textAlign: 'center', marginBottom: spacing.sm },
+  title: { fontSize: 28, fontWeight: '800', color: colors.white, textAlign: 'center' },
+  subtitle: { fontSize: 16, color: colors.background, marginTop: spacing.sm, textAlign: 'center', lineHeight: 22 },
+  rolChip: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.lg,
-    marginTop: spacing.xxl,
-  },
-  service: {
     alignItems: 'center',
-    gap: spacing.sm,
-    minWidth: 75,
+    gap: 6,
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    marginTop: spacing.md,
   },
-  serviceIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  serviceEmoji: {
-    fontSize: 26,
-  },
-  serviceLabel: {
-    fontSize: 15,
-    color: '#FFF9ED',
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  content: {
-    marginTop: spacing.xxl,
-    backgroundColor: '#FFF9ED',
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-  },
-  sectionTitle: {
-    color: '#34421D',
-    fontSize: 20,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  hint: {
-    color: '#626653',
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    marginBottom: spacing.lg,
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  buttons: {
-    gap: spacing.md,
-  },
-  homeButton: {
-    backgroundColor: '#FB923C',
-  },
-  footer: {
-    color: '#FFF9ED',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: spacing.xl,
-  },
+  rolText: { fontSize: 13.5, fontWeight: '800', color: colors.primaryDark },
+  services: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.xxl },
+  service: { alignItems: 'center', gap: spacing.sm, minWidth: 75 },
+  serviceIcon: { width: 56, height: 56, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  serviceLabel: { fontSize: 15, color: colors.background, fontWeight: '700', textAlign: 'center' },
+  content: { marginTop: spacing.xxl, backgroundColor: colors.background, borderRadius: radius.lg, padding: spacing.xl },
+  sectionTitle: { color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' },
+  hint: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing.lg, fontSize: 14, lineHeight: 21 },
+  buttons: { gap: spacing.md },
+  footer: { color: colors.background, fontSize: 12, textAlign: 'center', marginTop: spacing.xl },
 });

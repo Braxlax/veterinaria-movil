@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ESTADOS, Solicitud } from '../models/solicitud';
 import { ESTADO_INFO } from '../utils/constants';
-import { colors, radius, spacing } from '../utils/theme';
+import { radius, spacing } from '../utils/theme';
 
 export function ResumenEstados({ solicitudes }: { solicitudes: Solicitud[] }) {
   return (
@@ -11,7 +11,7 @@ export function ResumenEstados({ solicitudes }: { solicitudes: Solicitud[] }) {
         const info = ESTADO_INFO[estado];
         const cantidad = solicitudes.filter((s) => s.estado === estado).length;
         return (
-          <View key={estado} style={[styles.box, { backgroundColor: info.bg }]}>
+          <View key={estado} style={[styles.box, { backgroundColor: info.bg }]} accessible accessibilityLabel={`${cantidad} ${info.label}`}>
             <Text style={[styles.numero, { color: info.fg }]}>{cantidad}</Text>
             <Text style={[styles.label, { color: info.fg }]}>{info.label}</Text>
           </View>

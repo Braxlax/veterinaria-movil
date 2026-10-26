@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FormField } from '../components/FormField';
-import { autenticar } from '../utils/auth';
 import { useAuth } from '../store/AuthContext';
 import { colors, radius, spacing } from '../utils/theme';
 
@@ -11,27 +10,30 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { iniciarSesion } = useAuth();
+  const [cargando, setCargando] = useState(false);
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (cargando) return;
     if (!usuario.trim() || !contrasena) {
       setError('Ingresa tu usuario y contraseña.');
       return;
     }
 
-    const cuenta = autenticar(usuario, contrasena);
-    if (!cuenta) {
-      setError('Usuario o contraseña incorrectos.');
+    setCargando(true);
+    const resultado = await iniciarSesion(usuario, contrasena);
+    setCargando(false);
+
+    if (!resultado.ok) {
+      setError(resultado.mensaje);
       return;
     }
-
-    iniciarSesion({ usuario: cuenta.usuario, rol: cuenta.rol });
     setError('');
-    router.replace('/home');
   };
+
   return (
     <ImageBackground source={require('../../assets/images/tabIcons/fondobienvenida.png')} resizeMode="cover">
       <View style={styles.logoImage}>
@@ -138,9 +140,9 @@ const styles = StyleSheet.create({
     width: 34,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#78943B',
+    backgroundColor: colors.brand,
   },
-  /*cada huellita*/
+
   toe1: {
     left: -30,
     top: 10,
@@ -169,14 +171,14 @@ const styles = StyleSheet.create({
     width: 170,
     height: 70,
     borderRadius: 40,
-    backgroundColor: '#78943B',
+    backgroundColor: colors.brand,
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ rotate: '-2deg' }],
   },
 
   pawText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 80,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   loginButton: { marginTop: spacing.sm },
-  registerLink: { color: colors.primary, fontSize: 14, fontWeight: '700', textAlign: 'center', marginTop: spacing.md, paddingVertical: spacing.xs },
+  registerLink: { color: colors.brand, fontSize: 14, fontWeight: '700', textAlign: 'center', marginTop: spacing.md, paddingVertical: spacing.xs },
   demo: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: spacing.sm },
   footnote: {
     color: colors.textMuted,

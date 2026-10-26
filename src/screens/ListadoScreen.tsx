@@ -1,35 +1,31 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
+import { Fab } from '../components/Fab';
 import { FilterChips, FilterOption } from '../components/FilterChips';
 import { ResumenEstados } from '../components/ResumenEstados';
 import { SearchBar } from '../components/SearchBar';
 import { SolicitudCard } from '../components/SolicitudCard';
-
+import { useDatosVisibles } from '../hooks/useDatosVisibles';
+import { usePermisos } from '../hooks/usePermisos';
 import { ESTADOS, EstadoSolicitud, Solicitud } from '../models/solicitud';
-
 import { solicitudService } from '../services/solicitudService';
 import { useSolicitudes } from '../store/SolicitudContext';
 import { useToast } from '../store/ToastContext';
-import { useAuth } from '../store/AuthContext';
 import { confirmarEliminacion } from '../utils/alerts';
 import { ESTADO_INFO } from '../utils/constants';
 import { ordenarSolicitudes } from '../utils/ordenar';
-import { radius, spacing } from '../utils/theme';
+import { colors, spacing } from '../utils/theme';
 
 type Filtro = 'TODOS' | EstadoSolicitud;
 
 export default function ListadoScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const toast = useToast();
-  const { usuarioActual, cerrarSesion } = useAuth();
-  const esAdmin = usuarioActual?.rol === 'admin';
-
-  const { solicitudes, cargando, eliminarSolicitud } = useSolicitudes();
+  const { eliminarSolicitud } = useSolicitudes();
+  const { solicitudes, cargando } = useDatosVisibles();
+  const { eliminarSolicitud: puedeEliminar, crearSolicitud, verTodo } = usePermisos();
 
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('TODOS');
@@ -37,41 +33,29 @@ export default function ListadoScreen() {
 
   const opciones: FilterOption<Filtro>[] = useMemo(
     () => [
-      {
-        value: 'TODOS',
-        label: 'Todos',
-        count: solicitudes.length,
-      },
-      ...ESTADOS.map(estado => ({
+      { value: 'TODOS', label: 'Todos', count: solicitudes.length },
+      ...ESTADOS.map((estado) => ({
         value: estado as Filtro,
         label: ESTADO_INFO[estado].label,
-        count: solicitudes.filter(solicitud => solicitud.estado === estado).length,
+        count: solicitudes.filter((s) => s.estado === estado).length,
       })),
     ],
-    [solicitudes],
+    [solicitudes]
   );
 
   const filtradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-
-    const resultado = solicitudes.filter(solicitud => {
-      const coincideEstado = filtro === 'TODOS' || solicitud.estado === filtro;
-
+    const resultado = solicitudes.filter((s) => {
+      const coincideEstado = filtro === 'TODOS' || s.estado === filtro;
       const coincideTexto =
-        !q ||
-        solicitud.mascotaNombre.toLowerCase().includes(q) ||
-        solicitud.clienteNombre.toLowerCase().includes(q) ||
-        solicitud.telefono.includes(q);
-
+        !q || s.mascotaNombre.toLowerCase().includes(q) || s.clienteNombre.toLowerCase().includes(q) || s.telefono.includes(q);
       return coincideEstado && coincideTexto;
     });
-
     return ordenarSolicitudes(resultado);
   }, [solicitudes, busqueda, filtro]);
 
   const onRefresh = useCallback(async () => {
     setRefrescando(true);
-
     try {
       await solicitudService.refrescar();
       toast('Lista actualizada', 'info');
@@ -91,221 +75,56 @@ export default function ListadoScreen() {
 
   return (
     <View style={styles.screen}>
-      {/* Encabezado: tocar el logo o título lleva al Home */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerBrand}
-          activeOpacity={0.7}
-          onPress={() => router.replace('/home')}
-          accessibilityRole="button"
-          accessibilityLabel="Ir al inicio"
-        >
-          <Image source={require('../../assets/images/favicon.png')} style={styles.headerLogo} resizeMode="contain" />
-
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerTitle}>Centro Médico Mr. Patitas</Text>
-
-            <Text style={styles.headerSubtitle}>Gestión de solicitudes veterinarias</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Botón Salir */}
-        <Pressable
-          onPress={() => { cerrarSesion(); router.replace('/'); }}
-          accessibilityRole="button"
-          accessibilityLabel="Salir y volver al inicio de sesión"
-          style={({ pressed }) => [styles.homeButton, pressed && styles.fabPressed]}
-        >
-          <Text style={styles.homeButtonText}>Salir</Text>
-        </Pressable>
+      <View style={styles.top}>
+        <ResumenEstados solicitudes={solicitudes} />
+        <SearchBar value={busqueda} onChangeText={setBusqueda} />
+        <FilterChips options={opciones} selected={filtro} onSelect={setFiltro} />
       </View>
 
-      <View style={styles.container}>
-        <View style={styles.top}>
-          <ResumenEstados solicitudes={solicitudes} />
-
-          <SearchBar value={busqueda} onChangeText={setBusqueda} />
-
-          <FilterChips options={opciones} selected={filtro} onSelect={setFiltro} />
+      {cargando ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Cargando solicitudes...</Text>
         </View>
-
-        {cargando ? (
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" color="#78943B" />
-
-            <Text style={styles.loadingText}>Cargando solicitudes...</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filtradas}
-            keyExtractor={item => item.id}
-            contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
-            refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} colors={['#78943B']} tintColor="#78943B" />}
-            keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={
-              <EmptyState
-                icon="🐶"
-                title={solicitudes.length === 0 ? 'Aún no hay solicitudes' : 'Sin resultados'}
-                message={
-                  solicitudes.length === 0
+      ) : (
+        <FlatList
+          data={filtradas}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <EmptyState
+              icon="clipboard-text"
+              title={solicitudes.length === 0 ? 'Aún no hay solicitudes' : 'Sin resultados'}
+              message={
+                solicitudes.length === 0
+                  ? verTodo
                     ? 'Toca “Nueva solicitud” para registrar la primera.'
-                    : 'Prueba con otra búsqueda o cambia el filtro.'
-                }
-              />
-            }
-            renderItem={({ item }) => (
-              <SolicitudCard
-                solicitud={item}
-                onPress={() =>
-                  router.push({
-                    pathname: '/detalle',
-                    params: { id: item.id },
-                  })
-                }
-                onDelete={esAdmin ? () => onEliminar(item) : undefined}
-              />
-            )}
-          />
-        )}
+                    : 'Cuando pidas atención para tu mascota, la verás aquí.'
+                  : 'Prueba con otra búsqueda o cambia el filtro.'
+              }
+            />
+          }
+          renderItem={({ item }) => (
+            <SolicitudCard
+              solicitud={item}
+              onPress={() => router.push({ pathname: '/detalle', params: { id: item.id } })}
+              onDelete={puedeEliminar ? () => onEliminar(item) : undefined}
+            />
+          )}
+        />
+      )}
 
-        {/* Botón para registrar una nueva solicitud */}
-        {esAdmin ? <Pressable
-          onPress={() => router.push('/crear')}
-          accessibilityRole="button"
-          accessibilityLabel="Nueva solicitud"
-          style={({ pressed }) => [styles.fab, { bottom: insets.bottom + spacing.lg }, pressed && styles.fabPressed]}
-        >
-          <Text style={styles.fabPlus}>+</Text>
-          <Text style={styles.fabText}>Nueva solicitud</Text>
-        </Pressable> : null}
-      </View>
+      {crearSolicitud ? <Fab label="Nueva solicitud" onPress={() => router.push('/crear')} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#b3904b',
-  },
-
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF9ED',
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: '#90c420',
-    gap: spacing.sm,
-  },
-
-  headerBrand: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-
-  headerLogo: {
-    width: 48,
-    height: 48,
-  },
-
-  headerInfo: {
-    flex: 1,
-  },
-
-  headerTitle: {
-    color: '#526b2f',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-
-  headerSubtitle: {
-    color: '#777765',
-    fontSize: 11,
-    marginTop: 4,
-  },
-
-  homeButton: {
-    backgroundColor: '#DC2626',
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  homeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-
-  top: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-
-  list: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xs,
-  },
-
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-
-  loadingText: {
-    color: '#777765',
-    fontSize: 14,
-  },
-
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: '#78943B',
-    paddingHorizontal: spacing.xl,
-    minHeight: 54,
-    borderRadius: radius.pill,
-    elevation: 6,
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-  },
-
-  fabPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.97 }],
-  },
-
-  fabPlus: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-
-  fabText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
+  screen: { flex: 1, backgroundColor: colors.background },
+  top: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  list: { paddingHorizontal: spacing.lg, paddingBottom: 110 },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  loadingText: { color: colors.textMuted, fontSize: 14 },
 });

@@ -16,12 +16,7 @@ interface Props<T extends string> {
 
 export function FilterChips<T extends string>({ options, selected, onSelect }: Props<T>) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
-      style={styles.scroll}
-    >
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} style={styles.scroll}>
       {options.map((o) => {
         const active = o.value === selected;
         return (
@@ -33,7 +28,7 @@ export function FilterChips<T extends string>({ options, selected, onSelect }: P
             style={({ pressed }) => [styles.chip, active && styles.chipActive, pressed && { opacity: 0.75 }]}
           >
             <Text style={[styles.text, active && styles.textActive]}>
-              {o.label}
+              {o.label} · {o.count}
             </Text>
           </Pressable>
         );

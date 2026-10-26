@@ -1,28 +1,31 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { colors, radius, spacing } from '../utils/theme';
+import { AppIcon } from './AppIcon';
 
 interface Props {
   value: string;
   onChangeText: (t: string) => void;
+  placeholder?: string;
 }
 
-export function SearchBar({ value, onChangeText }: Props) {
+export function SearchBar({ value, onChangeText, placeholder = 'Buscar por mascota, cliente o teléfono' }: Props) {
   return (
     <View style={styles.box}>
-      <Text style={styles.icon}>🔍</Text>
+      <AppIcon name="magnify" size={20} color={colors.textMuted} />
       <TextInput
         style={styles.input}
-        placeholder="Buscar por mascota, cliente o teléfono"
-        placeholderTextColor="#a7a7a8"
+        placeholder={placeholder}
+        placeholderTextColor={colors.placeholder}
         value={value}
         onChangeText={onChangeText}
         autoCorrect={false}
         returnKeyType="search"
-        accessibilityLabel="Buscar solicitudes"
+        accessibilityLabel={placeholder}
       />
       {value.length > 0 && (
-        <Pressable onPress={() => onChangeText('')} hitSlop={10} accessibilityLabel="Limpiar búsqueda">
-          <Text style={styles.clear}>✕</Text>
+        <Pressable onPress={() => onChangeText('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Limpiar búsqueda">
+          <AppIcon name="close" size={18} color={colors.textMuted} />
         </Pressable>
       )}
     </View>
@@ -33,13 +36,12 @@ const styles = StyleSheet.create({
   box: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
   },
-  icon: { fontSize: 15, marginRight: spacing.sm },
   input: { flex: 1, paddingVertical: spacing.md, fontSize: 15, color: colors.text },
-  clear: { fontSize: 16, color: colors.textMuted, paddingHorizontal: spacing.xs },
 });

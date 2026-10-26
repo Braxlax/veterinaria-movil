@@ -1,11 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '../utils/theme';
+import { IconName } from '../utils/constants';
+import { colors, radius, spacing } from '../utils/theme';
+import { AppIcon } from './AppIcon';
 
-export function EmptyState({ icon, title, message }: { icon: string; title: string; message?: string }) {
+export function EmptyState({ icon = 'paw', title, message }: { icon?: IconName; title: string; message?: string }) {
   return (
     <View style={styles.box}>
-      <Text style={styles.icon}>{icon}</Text>
+      <View style={styles.circle}>
+        <AppIcon name={icon} size={36} color={colors.primary} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       {message ? <Text style={styles.message}>{message}</Text> : null}
     </View>
@@ -14,7 +18,7 @@ export function EmptyState({ icon, title, message }: { icon: string; title: stri
 
 const styles = StyleSheet.create({
   box: { alignItems: 'center', paddingVertical: spacing.xxl * 2, paddingHorizontal: spacing.xl },
-  icon: { fontSize: 48, marginBottom: spacing.md },
+  circle: { width: 76, height: 76, borderRadius: radius.pill, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
   title: { fontSize: 17, fontWeight: '800', color: colors.text, textAlign: 'center' },
   message: { fontSize: 14, color: colors.textMuted, marginTop: spacing.xs, textAlign: 'center' },
 });

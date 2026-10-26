@@ -1,35 +1,55 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '../store/AuthContext';
+import { AuthProvider, useAuth } from '../store/AuthContext';
+import { CitaProvider } from '../store/CitaContext';
+import { MascotaProvider } from '../store/MascotaContext';
 import { SolicitudProvider } from '../store/SolicitudContext';
 import { ToastProvider } from '../store/ToastContext';
-import { CLINICA_NOMBRE } from '../utils/constants';
+import { colors, headerOptions } from '../utils/theme';
+
+function RootStack() {
+  const { autenticado } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (autenticado) router.replace('/home');
+  }, [autenticado, router]);
+
+  return (
+    <Stack screenOptions={{ ...headerOptions, headerBackButtonDisplayMode: 'minimal', contentStyle: { backgroundColor: colors.background } }}>
+      <Stack.Protected guard={!autenticado}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="registro" options={{ title: 'Crear cuenta' }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={autenticado}>
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="crear" options={{ title: 'Nueva solicitud' }} />
+        <Stack.Screen name="detalle" options={{ title: 'Detalle de solicitud' }} />
+        <Stack.Screen name="cita-nueva" options={{ title: 'Agendar cita' }} />
+        <Stack.Screen name="mascota-nueva" options={{ title: 'Nueva mascota' }} />
+        <Stack.Screen name="mascota-detalle" options={{ title: 'Ficha de la mascota' }} />
+        <Stack.Screen name="servicios" options={{ title: 'Servicios y precios' }} />
+        <Stack.Screen name="contacto" options={{ title: 'Contacto y ubicación' }} />
+      </Stack.Protected>
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   return (
     <AuthProvider>
       <SolicitudProvider>
-        <ToastProvider>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: '#7e9936' },
-              headerTintColor: '#7e9936',
-              headerTitleStyle: { fontWeight: '700', fontSize: 18 },
-              contentStyle: { backgroundColor: '#FFF9ED' },
-            }}
-          >
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="home" options={{ headerShown: false }} />
-            <Stack.Screen name="registro" options={{ title: 'Crear una cuenta' }} />
-            <Stack.Screen
-              name="solicitudes"
-              options={{ title: CLINICA_NOMBRE, headerBackVisible: false }}
-            />
-            <Stack.Screen name="crear" options={{ title: 'Nueva solicitud' }} />
-            <Stack.Screen name="detalle" options={{ title: 'Detalle de solicitud' }} />
-          </Stack>
-        </ToastProvider>
+        <MascotaProvider>
+          <CitaProvider>
+            <ToastProvider>
+              <StatusBar style="light" />
+              <RootStack />
+            </ToastProvider>
+          </CitaProvider>
+        </MascotaProvider>
       </SolicitudProvider>
     </AuthProvider>
   );
