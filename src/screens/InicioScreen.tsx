@@ -27,11 +27,18 @@ interface Acceso {
   ruta: string;
 }
 
+// Solo estos dos accesos rápidos se muestran en ambos perfiles.
 const ACCESOS: Acceso[] = [
-  { titulo: 'Nueva solicitud', icon: 'clipboard-text', ruta: '/crear' },
-  { titulo: 'Agendar cita', icon: 'calendar-plus', ruta: '/cita-nueva' },
-  { titulo: 'Nueva mascota', icon: 'paw', ruta: '/mascota-nueva' },
-  { titulo: 'Servicios y precios', icon: 'tag', ruta: '/servicios' },
+  {
+    titulo: 'Nueva mascota',
+    icon: 'paw',
+    ruta: '/mascota-nueva',
+  },
+  {
+    titulo: 'Agendar cita',
+    icon: 'calendar-plus',
+    ruta: '/cita-nueva',
+  },
 ];
 
 export default function InicioScreen() {
@@ -39,7 +46,7 @@ export default function InicioScreen() {
   const insets = useSafeAreaInsets();
 
   const { sesion } = useAuth();
-  const { verTodo, crearSolicitud } = usePermisos();
+  const { verTodo } = usePermisos();
   const { solicitudes, mascotas, citas, cargando } = useDatosVisibles();
 
   // Solicitudes urgentes pendientes de atención.
@@ -56,7 +63,10 @@ export default function InicioScreen() {
   const recordatorios = useMemo(
     () =>
       mascotas
-        .map(m => ({ mascota: m, estado: estadoVacunacion(m) }))
+        .map(m => ({
+          mascota: m,
+          estado: estadoVacunacion(m),
+        }))
         .filter(r => r.estado.label === 'Vacuna vencida' || r.estado.label.startsWith('Vacuna en')),
     [mascotas],
   );
@@ -98,7 +108,7 @@ export default function InicioScreen() {
           </View>
         ) : (
           <>
-            {/* La alerta urgente solo se muestra a quienes pueden ver todo. */}
+            {/* La alerta urgente solo aparece a quienes pueden ver todo. */}
             {verTodo && urgentes.length > 0 ? (
               <Pressable
                 onPress={() => router.push('/solicitudes')}
@@ -129,23 +139,23 @@ export default function InicioScreen() {
 
             <ResumenEstados solicitudes={solicitudes} />
 
-            {/* Accesos rápidos */}
+            {/* Accesos rápidos: Nueva mascota y Agendar cita */}
             <SectionHeader titulo="Accesos rápidos" />
 
             <View style={styles.grid}>
-              {ACCESOS.filter(a => a.ruta !== '/crear' || crearSolicitud).map(a => (
+              {ACCESOS.map(acceso => (
                 <Pressable
-                  key={a.ruta}
-                  onPress={() => router.push(a.ruta as never)}
+                  key={acceso.ruta}
+                  onPress={() => router.push(acceso.ruta as never)}
                   accessibilityRole="button"
-                  accessibilityLabel={a.titulo}
+                  accessibilityLabel={acceso.titulo}
                   style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
                 >
                   <View style={styles.tileIcon}>
-                    <AppIcon name={a.icon} size={26} color={colors.primary} />
+                    <AppIcon name={acceso.icon} size={26} color={colors.primary} />
                   </View>
 
-                  <Text style={styles.tileText}>{a.titulo}</Text>
+                  <Text style={styles.tileText}>{acceso.titulo}</Text>
                 </Pressable>
               ))}
             </View>
@@ -159,7 +169,7 @@ export default function InicioScreen() {
                 <Text style={styles.vacioTexto}>No hay citas programadas por ahora.</Text>
               </View>
             ) : (
-              proximas.map(c => <CitaCard key={c.id} cita={c} />)
+              proximas.map(cita => <CitaCard key={cita.id} cita={cita} />)
             )}
 
             {/* Recordatorios de vacunas */}
