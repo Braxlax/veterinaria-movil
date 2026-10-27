@@ -14,10 +14,7 @@ import { iniciales } from '../utils/format';
 import { permisosDe, ROL_INFO } from '../utils/permisos';
 import { colors, radius, shadow, spacing } from '../utils/theme';
 
-const ENLACES: { titulo: string; icon: IconName; ruta: string }[] = [
-  { titulo: 'Servicios y precios', icon: 'tag', ruta: '/servicios' },
-  { titulo: 'Contacto y ubicación', icon: 'map-marker', ruta: '/contacto' },
-];
+const ENLACES: { titulo: string; icon: IconName; ruta: string }[] = [{ titulo: 'Servicios y precios', icon: 'tag', ruta: '/servicios' }];
 
 export default function PerfilScreen() {
   const router = useRouter();
@@ -64,7 +61,7 @@ export default function PerfilScreen() {
 
       <SectionHeader titulo="Lo que puedes hacer" />
       <View style={styles.card}>
-        {permisosLista.map((t) => (
+        {permisosLista.map(t => (
           <View key={t} style={styles.permiso}>
             <AppIcon name="check-circle" size={18} color={colors.success} />
             <Text style={styles.permisoTexto}>{t}</Text>
@@ -73,8 +70,13 @@ export default function PerfilScreen() {
       </View>
 
       <SectionHeader titulo="Información" />
-      {ENLACES.map((e) => (
-        <Pressable key={e.ruta} onPress={() => router.push(e.ruta as never)} accessibilityRole="button" style={({ pressed }) => [styles.enlace, pressed && { backgroundColor: colors.surfaceAlt }]}>
+      {ENLACES.map(e => (
+        <Pressable
+          key={e.ruta}
+          onPress={() => router.push(e.ruta as never)}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.enlace, pressed && { backgroundColor: colors.surfaceAlt }]}
+        >
           <AppIcon name={e.icon} size={22} color={colors.primary} />
           <Text style={styles.enlaceTexto}>{e.titulo}</Text>
           <AppIcon name="chevron-right" size={22} color={colors.textMuted} />
@@ -92,13 +94,38 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg },
   cabecera: { alignItems: 'center', gap: spacing.xs, marginBottom: spacing.lg },
   nombre: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: spacing.sm },
-  rolChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.primarySoft, paddingHorizontal: spacing.md, paddingVertical: 5, borderRadius: radius.pill },
+  rolChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
   rolTexto: { fontSize: 13.5, fontWeight: '800', color: colors.primaryDark },
   rolDesc: { fontSize: 13.5, color: colors.textMuted },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+  },
   permiso: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', paddingVertical: 5 },
   permisoTexto: { flex: 1, fontSize: 14, color: colors.text, lineHeight: 20 },
-  enlace: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.sm },
+  enlace: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.sm,
+  },
   enlaceTexto: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.text },
   version: { textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: spacing.lg },
 });

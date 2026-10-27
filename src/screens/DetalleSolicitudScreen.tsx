@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EstadoChip, PrioridadChip } from '../components/Chip';
 import { DatoFila } from '../components/DatoFila';
@@ -11,7 +11,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionHeader } from '../components/SectionHeader';
 import { ServicioIcon } from '../components/ServicioIcon';
 import { usePermisos } from '../hooks/usePermisos';
-import { EstadoSolicitud, ESTADOS, Prioridad, PRIORIDADES } from '../models/solicitud';
+import { ESTADOS, EstadoSolicitud, Prioridad, PRIORIDADES } from '../models/solicitud';
 import { useSolicitudes } from '../store/SolicitudContext';
 import { useToast } from '../store/ToastContext';
 import { confirmarEliminacion } from '../utils/alerts';
@@ -67,8 +67,10 @@ export default function DetalleSolicitudScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled">
-
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.summary}>
           <View style={styles.summaryHeader}>
             <ServicioIcon tipo={solicitud.tipoServicio} size={56} />
@@ -86,13 +88,6 @@ export default function DetalleSolicitudScreen() {
           <DatoFila icon="clock-outline" label="Registrada" value={formatearFecha(solicitud.fechaRegistro)} />
         </View>
 
-        {verTodo ? (
-          <View style={styles.contactRow}>
-            <PrimaryButton title="Llamar" icon="phone" variant="outline" onPress={() => Linking.openURL(`tel:${solicitud.telefono}`)} style={styles.flexBtn} />
-            <PrimaryButton title="WhatsApp" icon="whatsapp" variant="outline" onPress={() => Linking.openURL(`https://wa.me/51${solicitud.telefono}`)} style={styles.flexBtn} />
-          </View>
-        ) : null}
-
         {puedeEditar ? (
           <>
             <SectionHeader titulo="Actualizar solicitud" />
@@ -100,13 +95,13 @@ export default function DetalleSolicitudScreen() {
               label="Estado de atención"
               selected={estado}
               onSelect={setEstado}
-              options={ESTADOS.map((e) => ({ value: e, label: ESTADO_INFO[e].label }))}
+              options={ESTADOS.map(e => ({ value: e, label: ESTADO_INFO[e].label }))}
             />
             <OptionSelector
               label="Prioridad"
               selected={prioridad}
               onSelect={setPrioridad}
-              options={PRIORIDADES.map((p) => ({ value: p, label: PRIORIDAD_INFO[p].label }))}
+              options={PRIORIDADES.map(p => ({ value: p, label: PRIORIDAD_INFO[p].label }))}
             />
             <FormField
               label="Descripción"
@@ -140,7 +135,13 @@ export default function DetalleSolicitudScreen() {
           style={{ marginTop: spacing.md }}
         />
         {puedeEliminar ? (
-          <PrimaryButton title="Eliminar solicitud" icon="delete-outline" variant="danger" onPress={handleEliminar} style={{ marginTop: spacing.sm }} />
+          <PrimaryButton
+            title="Eliminar solicitud"
+            icon="delete-outline"
+            variant="danger"
+            onPress={handleEliminar}
+            style={{ marginTop: spacing.sm }}
+          />
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -151,11 +152,27 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   flexBtn: { flex: 1 },
   content: { padding: spacing.lg },
-  summary: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
+  summary: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+  },
   summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
   mascota: { fontSize: 22, fontWeight: '800', color: colors.text },
   servicio: { fontSize: 14, color: colors.textMuted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   contactRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  descLectura: { fontSize: 15, lineHeight: 22, color: colors.text, backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+  descLectura: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
 });

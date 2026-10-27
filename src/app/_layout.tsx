@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../store/AuthContext';
 import { CitaProvider } from '../store/CitaContext';
 import { MascotaProvider } from '../store/MascotaContext';
@@ -17,7 +17,9 @@ function RootStack() {
   }, [autenticado, router]);
 
   return (
-    <Stack screenOptions={{ ...headerOptions, headerBackButtonDisplayMode: 'minimal', contentStyle: { backgroundColor: colors.background } }}>
+    <Stack
+      screenOptions={{ ...headerOptions, headerBackButtonDisplayMode: 'minimal', contentStyle: { backgroundColor: colors.background } }}
+    >
       <Stack.Protected guard={!autenticado}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="registro" options={{ title: 'Crear cuenta' }} />
@@ -32,7 +34,6 @@ function RootStack() {
         <Stack.Screen name="mascota-nueva" options={{ title: 'Nueva mascota' }} />
         <Stack.Screen name="mascota-detalle" options={{ title: 'Ficha de la mascota' }} />
         <Stack.Screen name="servicios" options={{ title: 'Servicios y precios' }} />
-        <Stack.Screen name="contacto" options={{ title: 'Contacto y ubicación' }} />
       </Stack.Protected>
     </Stack>
   );
