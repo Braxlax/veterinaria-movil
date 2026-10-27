@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '../components/AppIcon';
 import { Avatar } from '../components/Avatar';
 import { Chip } from '../components/Chip';
-import { CitaCard } from '../components/CitaCard';
 import { estadoVacunacion } from '../components/MascotaCard';
 import { ResumenEstados } from '../components/ResumenEstados';
 import { SectionHeader } from '../components/SectionHeader';
@@ -17,7 +16,6 @@ import { useAuth } from '../store/AuthContext';
 
 import { CLINICA_NOMBRE, IconName } from '../utils/constants';
 import { iniciales } from '../utils/format';
-import { ordenarCitas } from '../utils/ordenar';
 import { ROL_INFO } from '../utils/permisos';
 import { colors, radius, shadow, spacing } from '../utils/theme';
 
@@ -27,18 +25,16 @@ interface Acceso {
   ruta: string;
 }
 
-// Solo estos dos accesos rápidos se muestran en ambos perfiles.
+interface Acceso {
+  titulo: string;
+  icon: IconName;
+  ruta: string;
+}
+
 const ACCESOS: Acceso[] = [
-  {
-    titulo: 'Nueva mascota',
-    icon: 'paw',
-    ruta: '/mascota-nueva',
-  },
-  {
-    titulo: 'Agendar cita',
-    icon: 'calendar-plus',
-    ruta: '/cita-nueva',
-  },
+  { titulo: 'Nueva mascota', icon: 'paw', ruta: '/mascota-nueva' },
+  { titulo: 'Nueva solicitud', icon: 'clipboard-text', ruta: '/crear' },
+  { titulo: 'Agendar cita', icon: 'calendar-plus', ruta: '/cita-nueva' },
 ];
 
 export default function InicioScreen() {
@@ -49,25 +45,23 @@ export default function InicioScreen() {
   const { verTodo } = usePermisos();
   const { solicitudes, mascotas, citas, cargando } = useDatosVisibles();
 
-  // Solicitudes urgentes pendientes de atención.
-  const urgentes = useMemo(() => solicitudes.filter(s => s.prioridad === 'ALTA' && s.estado !== 'FINALIZADO'), [solicitudes]);
+  const esAdmin = sesion?.rol === 'admin';
 
-  // Próximas citas programadas.
-  const proximas = useMemo(
-    () =>
-      ordenarCitas(citas.filter(c => c.estado === 'PROGRAMADA' && new Date(c.fechaHora).getTime() >= Date.now() - 3_600_000)).slice(0, 3),
-    [citas],
+  const accesosVisibles = useMemo(() => ACCESOS.filter(acceso => acceso.ruta !== '/cita-nueva' || esAdmin), [esAdmin]);
+
+  const urgentes = useMemo(
+    () => solicitudes.filter(solicitud => solicitud.prioridad === 'ALTA' && solicitud.estado !== 'FINALIZADO'),
+    [solicitudes],
   );
 
-  // Recordatorios de vacunación.
   const recordatorios = useMemo(
     () =>
       mascotas
-        .map(m => ({
-          mascota: m,
-          estado: estadoVacunacion(m),
+        .map(mascota => ({
+          mascota,
+          estado: estadoVacunacion(mascota),
         }))
-        .filter(r => r.estado.label === 'Vacuna vencida' || r.estado.label.startsWith('Vacuna en')),
+        .filter(recordatorio => recordatorio.estado.label === 'Vacuna vencida' || recordatorio.estado.label.startsWith('Vacuna en')),
     [mascotas],
   );
 
@@ -81,7 +75,6 @@ export default function InicioScreen() {
       }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Encabezado */}
       <View style={[styles.hero, { paddingTop: insets.top + spacing.lg }]}>
         <View style={styles.heroRow}>
           <Avatar texto={iniciales(sesion.nombre, sesion.apellidos)} size={54} />
@@ -99,7 +92,6 @@ export default function InicioScreen() {
         <Text style={styles.clinica}>{CLINICA_NOMBRE}</Text>
       </View>
 
-      {/* Contenido principal */}
       <View style={styles.body}>
         {cargando ? (
           <View style={styles.loading}>
@@ -108,7 +100,6 @@ export default function InicioScreen() {
           </View>
         ) : (
           <>
-            {/* La alerta urgente solo aparece a quienes pueden ver todo. */}
             {verTodo && urgentes.length > 0 ? (
               <Pressable
                 onPress={() => router.push('/solicitudes')}
@@ -130,7 +121,6 @@ export default function InicioScreen() {
               </Pressable>
             ) : null}
 
-            {/* Resumen de solicitudes */}
             <SectionHeader
               titulo={verTodo ? 'Resumen de solicitudes' : 'Mis solicitudes'}
               accion="Ver todas"
@@ -139,40 +129,36 @@ export default function InicioScreen() {
 
             <ResumenEstados solicitudes={solicitudes} />
 
-            {/* Accesos rápidos: Nueva mascota y Agendar cita */}
-            <SectionHeader titulo="Accesos rápidos" />
+            {accesosVisibles.length > 0 ? (
+              <>
+                <SectionHeader titulo="Accesos rápidos" />
 
-            <View style={styles.grid}>
-              {ACCESOS.map(acceso => (
-                <Pressable
-                  key={acceso.ruta}
-                  onPress={() => router.push(acceso.ruta as never)}
-                  accessibilityRole="button"
-                  accessibilityLabel={acceso.titulo}
-                  style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
-                >
-                  <View style={styles.tileIcon}>
-                    <AppIcon name={acceso.icon} size={26} color={colors.primary} />
-                  </View>
+                <View style={styles.grid}>
+                  {accesosVisibles.map(acceso => (
+                    <Pressable
+                      key={acceso.ruta}
+                      onPress={() => {
+                        if (acceso.ruta === '/cita-nueva' && !esAdmin) {
+                          return;
+                        }
 
-                  <Text style={styles.tileText}>{acceso.titulo}</Text>
-                </Pressable>
-              ))}
-            </View>
+                        router.push(acceso.ruta as never);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={acceso.titulo}
+                      style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
+                    >
+                      <View style={styles.tileIcon}>
+                        <AppIcon name={acceso.icon} size={26} color={colors.primary} />
+                      </View>
 
-            {/* Próximas citas */}
-            <SectionHeader titulo="Próximas citas" accion="Ver agenda" onAccion={() => router.push('/agenda')} />
+                      <Text style={styles.tileText}>{acceso.titulo}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            ) : null}
 
-            {proximas.length === 0 ? (
-              <View style={styles.vacio}>
-                <AppIcon name="calendar-month" size={24} color={colors.textMuted} />
-                <Text style={styles.vacioTexto}>No hay citas programadas por ahora.</Text>
-              </View>
-            ) : (
-              proximas.map(cita => <CitaCard key={cita.id} cita={cita} />)
-            )}
-
-            {/* Recordatorios de vacunas */}
             {recordatorios.length > 0 ? (
               <>
                 <SectionHeader titulo="Recordatorios de vacunas" />
@@ -215,7 +201,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-
   hero: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
@@ -223,55 +208,46 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.lg + 8,
     borderBottomRightRadius: radius.lg + 8,
   },
-
   heroRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-
   hola: {
     fontSize: 22,
     fontWeight: '800',
     color: colors.white,
   },
-
   rolRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     marginTop: 2,
   },
-
   rol: {
     fontSize: 13.5,
     color: colors.primarySoft,
     fontWeight: '600',
   },
-
   clinica: {
     marginTop: spacing.lg,
     fontSize: 13.5,
     color: colors.primarySoft,
     fontWeight: '600',
   },
-
   body: {
     paddingHorizontal: spacing.lg,
     marginTop: -spacing.md,
   },
-
   loading: {
     alignItems: 'center',
     paddingVertical: spacing.xxl * 2,
     gap: spacing.md,
   },
-
   loadingText: {
     color: colors.textMuted,
     fontSize: 14,
   },
-
   alerta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -283,25 +259,21 @@ const styles = StyleSheet.create({
     borderColor: colors.dangerBorder,
     marginTop: spacing.lg,
   },
-
   alertaTitulo: {
     fontSize: 15.5,
     fontWeight: '800',
     color: colors.danger,
   },
-
   alertaTexto: {
     fontSize: 13,
     color: colors.text,
     marginTop: 1,
   },
-
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
   },
-
   tile: {
     width: '47.5%',
     backgroundColor: colors.surface,
@@ -312,12 +284,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     ...shadow.card,
   },
-
   tilePressed: {
     backgroundColor: colors.surfaceAlt,
     transform: [{ scale: 0.98 }],
   },
-
   tileIcon: {
     width: 46,
     height: 46,
@@ -326,13 +296,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   tileText: {
     fontSize: 14.5,
     fontWeight: '700',
     color: colors.text,
   },
-
   vacio: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -343,12 +311,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-
   vacioTexto: {
     color: colors.textMuted,
     fontSize: 14,
   },
-
   recordatorio: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -360,7 +326,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: spacing.sm,
   },
-
   recNombre: {
     flex: 1,
     fontSize: 15,

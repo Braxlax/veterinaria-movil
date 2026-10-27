@@ -43,7 +43,7 @@ export default function BienvenidaScreen() {
         ) : null}
 
         <View style={styles.services}>
-          {TIPOS_SERVICIO.map((t) => (
+          {TIPOS_SERVICIO.map(t => (
             <View key={t} style={styles.service}>
               <View style={[styles.serviceIcon, { backgroundColor: SERVICIO_INFO[t].color }]}>
                 <AppIcon name={SERVICIO_INFO[t].icon} size={28} color={SERVICIO_INFO[t].fg} />
@@ -58,8 +58,8 @@ export default function BienvenidaScreen() {
         <Text style={styles.sectionTitle}>¿Qué deseas hacer hoy?</Text>
         <Text style={styles.hint}>
           {esCliente
-            ? 'Consulta el estado de tus solicitudes, pide atención para tu mascota o agenda una cita.'
-            : 'Administra las solicitudes de atención de tus clientes desde un solo lugar.'}
+            ? 'Consulta tus solicitudes y revisa las citas programadas para tus mascotas.'
+            : 'Administra las solicitudes de atención y agenda las citas de tus clientes desde un solo lugar.'}
         </Text>
 
         <View style={styles.buttons}>
