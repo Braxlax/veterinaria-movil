@@ -1,9 +1,9 @@
 import { Tabs } from 'expo-router';
 import type { ColorValue } from 'react-native';
-import { AppIcon } from '../../components/AppIcon';
-import { useAuth } from '../../store/AuthContext';
-import { IconName } from '../../utils/constants';
-import { colors, headerOptions } from '../../utils/theme';
+import { AppIcon } from '../../presentation/components/AppIcon';
+import { useAuth } from '../../presentation/store/AuthContext';
+import { IconName } from '../../presentation/constants/ui';
+import { colors, headerOptions } from '../../presentation/theme/theme';
 
 const icono = (name: IconName) =>
   function TabIcon({ color, size }: { color: ColorValue; size: number }) {

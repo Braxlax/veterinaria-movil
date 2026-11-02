@@ -1,12 +1,12 @@
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { AuthProvider, useAuth } from '../store/AuthContext';
-import { CitaProvider } from '../store/CitaContext';
-import { MascotaProvider } from '../store/MascotaContext';
-import { SolicitudProvider } from '../store/SolicitudContext';
-import { ToastProvider } from '../store/ToastContext';
-import { colors, headerOptions } from '../utils/theme';
+import { AuthProvider, useAuth } from '../presentation/store/AuthContext';
+import { CitaProvider } from '../presentation/store/CitaContext';
+import { MascotaProvider } from '../presentation/store/MascotaContext';
+import { SolicitudProvider } from '../presentation/store/SolicitudContext';
+import { ToastProvider } from '../presentation/store/ToastContext';
+import { colors, headerOptions } from '../presentation/theme/theme';
 
 function RootStack() {
   const { autenticado } = useAuth();

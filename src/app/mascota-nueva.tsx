@@ -1,1 +1,1 @@
-export { default } from '../screens/MascotaFormScreen';
+export { default } from '../presentation/screens/MascotaFormScreen';

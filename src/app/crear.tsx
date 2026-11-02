@@ -1,1 +1,1 @@
-export { default } from '../screens/CrearSolicitudScreen';
+export { default } from '../presentation/screens/CrearSolicitudScreen';
