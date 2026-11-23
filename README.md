@@ -1,85 +1,136 @@
-# 🐾 Centro Médico Mr. Patitas — Gestión de solicitudes de atención
+# 🐾 Centro Médico Mr. Patitas
 
-App móvil (React Native + Expo) para registrar y gestionar las solicitudes de atención de una clínica veterinaria
-(consultas, vacunación, emergencias y grooming). Evaluación parcial — Desarrollo de Aplicaciones Móviles 1 (IDAT).
+Aplicación móvil con React Native, Expo Router y TypeScript para gestionar solicitudes de atención, agenda de citas, mascotas, vacunas e historial clínico.
 
-> Los datos viven **en memoria** (useReducer + Context). No usa base de datos: al cerrar la app se reinician.
+Este repositorio conserva el contexto veterinario del proyecto del parcial e incorpora persistencia local con SQLite, una integración opcional con Firebase y un ejemplo de consumo REST. **La rúbrica compartida describe un emprendimiento de productos artesanales y gestión de pedidos**; si el docente exige literalmente ese caso, todavía hay que adaptar el modelo y las pantallas de negocio (cliente, productos, cantidad, precio y pedido) antes de afirmar que se cumple toda la rúbrica.
 
 ## Requisitos
 
-- Node.js 20 o superior y npm
-- Android Studio con un emulador (AVD) creado **o** un celular Android con "Depuración USB"
-  (en iOS: Xcode + simulador, solo macOS)
-- Variables de entorno `ANDROID_HOME` y `platform-tools` en el `PATH` (para que funcione `adb`)
+- Node.js compatible con la versión de Expo declarada en `package.json` y npm.
+- Android Studio con un emulador Android o un dispositivo físico con depuración USB para probar las funciones nativas.
+- Para Firebase: un proyecto propio en Firebase Console y sus reglas de seguridad publicadas.
 
-## Instalación
+## Instalación y ejecución
 
-```bash
-npm install
-```
+1. Descomprime el proyecto y abre su carpeta en Visual Studio Code.
+2. Instala las dependencias:
 
-## Ejecución
+   ```bash
+   npm install
+   ```
 
-1. Abre el emulador desde Android Studio (Device Manager ▶) y espera a que cargue el home de Android.
-2. Verifica que esté en línea: `adb devices` debe mostrar `emulator-5554   device`.
-3. Inicia la app:
+3. Ejecuta la aplicación:
 
-```bash
-npx expo start --android     # emulador / dispositivo Android
-npx expo start --ios         # simulador iOS (macOS)
-```
+   ```bash
+   npx expo start
+   ```
 
-Alternativa: `npx expo start` y presionar `a` (Android) o `i` (iOS). También puedes escanear el QR con Expo Go.
+4. Pulsa `a` para abrir Android o escanea el QR con una versión de Expo Go compatible. Para limpiar la caché: `npx expo start -c`.
 
-## Cómo probar el flujo CRUD
+## SQLite: persistencia local
 
-| Acción | Cómo probarla |
-|---|---|
-| **Listar** | Pantalla de bienvenida → **Ingresar**. Verás 4 solicitudes de ejemplo. |
-| **Buscar / Filtrar** | Escribe en el buscador (mascota, cliente o teléfono) y usa los chips Todos / Pendiente / En atención / Finalizado. |
-| **Crear** | Botón **＋ Nueva solicitud** → deja campos vacíos para ver las validaciones bajo cada input → completa y **Registrar solicitud**. Aparece un toast y la solicitud nueva queda primera en la lista como *Pendiente*. |
-| **Ver detalle** | Toca cualquier tarjeta. |
-| **Actualizar** | En el detalle cambia **estado**, **prioridad** o **descripción** → **Guardar cambios**. Vuelve a la lista y verás el chip actualizado. |
-| **Eliminar** | Botón **Eliminar** en la tarjeta o en el detalle → confirma en el diálogo. |
-| **Refrescar** | Desliza la lista hacia abajo (simula recarga). |
+La aplicación utiliza `expo-sqlite`. La base `mrpatitas.db` y sus tablas se crean automáticamente en el almacenamiento local de la aplicación. No hay que instalar un servidor SQL ni crear el archivo manualmente.
 
-## Arquitectura
+Código principal:
 
-```
+- `src/infraestructure/database/database.ts`: inicializa SQLite, crea las tablas `mascotas`, `citas`, `solicitudes` y `sync_outbox`, y proporciona operaciones de persistencia.
+- `src/infraestructure/services/`: consulta SQLite y guarda los cambios de los Context.
+- `src/presentation/store/`: mantiene el estado visible de la interfaz y llama a los repositorios para persistir cambios.
+
+Al primer inicio, se copian los datos de demostración si las tablas están vacías. Los cambios posteriores se guardan localmente y deben seguir disponibles al reiniciar la aplicación. La cola `sync_outbox` registra cambios pendientes de enviar a Firebase.
+
+## Firebase: configuración externa necesaria
+
+Firebase no funcionará hasta configurar un proyecto propio. No se incluyen credenciales de un proyecto Firebase porque deben pertenecer al equipo.
+
+1. Entra a https://console.firebase.google.com/ y crea un proyecto.
+2. Registra una aplicación web dentro del proyecto Firebase y copia su configuración.
+3. Activa **Authentication → Sign-in method → Email/Password**.
+4. Crea la base de **Cloud Firestore** y activa **Storage** si se cargarán archivos.
+5. Copia `.env.example` como `.env` y completa los valores `EXPO_PUBLIC_FIREBASE_*` con la configuración de tu proyecto.
+6. Publica las reglas de `firestore.rules` y `storage.rules` en Firebase Console (los archivos están referenciados en `firebase.json`).
+7. Reinicia Expo para que lea las variables:
+
+   ```bash
+   npx expo start -c
+   ```
+
+Cuando las variables de Firebase no están configuradas, la app mantiene el modo de demostración con las cuentas locales indicadas más abajo. Cuando Firebase sí está configurado, el login utiliza correo electrónico y contraseña de Firebase Authentication. El registro crea cuentas con rol `cliente`. Para probar el rol `admin`, registra primero la cuenta y cambia su campo `rol` a `admin` en el documento correspondiente de la colección `usuarios` desde Firebase Console.
+
+**Importante:** las variables `EXPO_PUBLIC_*` se incorporan al cliente móvil y no deben contener claves privadas de servidor. La seguridad de los datos depende de las reglas de Firestore/Storage, no de ocultar la configuración del cliente.
+
+### Archivos de integración Firebase
+
+- `src/infraestructure/firebase/config.ts`: inicializa Firebase cuando existe configuración.
+- `src/infraestructure/firebase/authFirebaseService.ts`: registro, login, cierre y recuperación de sesión.
+- `src/infraestructure/firebase/firestoreService.ts`: guarda o elimina documentos remotos.
+- `src/infraestructure/firebase/storageService.ts`: carga un archivo y devuelve su URL. Desde Perfil se puede elegir una imagen y subirla a la carpeta privada del usuario en Storage.
+- `src/infraestructure/sync/syncService.ts`: procesa la cola local sin duplicar documentos, usando el ID local como ID remoto.
+- `src/infraestructure/sync/networkService.ts`: comprueba la conectividad y reintenta cuando vuelve internet.
+
+Las colecciones de Firestore utilizadas para sincronización son `mascotas`, `citas` y `solicitudes`. La sincronización de registros nuevos o modificados requiere una sesión Firebase activa. Si no hay configuración o conexión, las operaciones permanecen en la cola local.
+
+## API REST de demostración
+
+La pantalla **Servicios y precios → Probar consumo de API REST** consulta el endpoint público `https://dummyjson.com/products?limit=30`. Muestra carga, errores y reintento. Es un catálogo genérico de demostración, no un catálogo veterinario real. Se puede reemplazar la URL base con `EXPO_PUBLIC_API_BASE_URL`.
+
+Código principal:
+
+- `src/infraestructure/api/apiClient.ts`: petición HTTP y errores de respuesta.
+- `src/infraestructure/services/catalogoService.ts`: obtiene y tipa la lista de productos.
+- `src/presentation/screens/CatalogoApiScreen.tsx`: interfaz de carga, error y resultados.
+
+## Cuentas de demostración
+
+Solo se utilizan cuando no se ha configurado Firebase:
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `patitas123` |
+| Cliente | `usuario` | `usuario123` |
+
+En modo Firebase, el inicio de sesión utiliza el correo electrónico de la cuenta.
+
+## Estructura principal
+
+```text
 src/
-├── app/          Rutas de Expo Router (delgadas: solo enlazan URL → pantalla)
-├── screens/      Pantallas (presentación): Bienvenida, Listado, Crear, Detalle/Editar
-├── components/   Componentes reutilizables: SolicitudCard, Chip, FormField, OptionSelector,
-│                 SearchBar, FilterChips, PrimaryButton, ServicioIcon, EmptyState
-├── store/        Estado global: solicitudReducer (lógica del CRUD), SolicitudContext, ToastContext
-├── services/     solicitudService: simula la capa de datos/API (carga inicial, refresco, creación)
-├── models/       Tipos: Solicitud, EstadoSolicitud, Prioridad, TipoServicio
-└── utils/        theme (diseño), constants, validators, format, alerts
+├── app/                       # Rutas y navegación Expo Router
+├── domain/                    # Entidades, reglas, casos de uso y contratos
+├── infraestructure/
+│   ├── api/                   # Cliente REST
+│   ├── database/              # SQLite y cola local de sincronización
+│   ├── firebase/              # Authentication, Firestore y Storage
+│   ├── sync/                  # Conectividad y sincronización
+│   ├── data/                  # Datos iniciales de demostración
+│   ├── repositories/          # Implementaciones de repositorios
+│   └── services/              # Servicios de datos y catálogo REST
+└── presentation/
+    ├── components/            # Componentes reutilizables
+    ├── screens/               # Pantallas
+    ├── store/                 # Context y reducers
+    ├── hooks/                 # Hooks personalizados
+    ├── theme/                 # Sistema de diseño
+    └── utils/                 # Alertas y formato
 ```
 
-**Flujo de datos:** Pantalla → acción del Context (`agregarSolicitud`, …) → `dispatch` → `solicitudReducer` → nuevo estado → re-render.
-Las pantallas no contienen lógica de negocio: validaciones en `utils/validators`, reglas del CRUD en el reducer, datos en `services`.
+## Generar una compilación Android
 
-**Hooks usados:** `useState` (formularios, filtros), `useEffect` (carga inicial simulada), `useReducer` + `Context` (CRUD en memoria),
-`useMemo`/`useCallback` (filtros y acciones).
-
-## Modelo de datos
-
-`Solicitud { id, clienteNombre, telefono, mascotaNombre, tipoServicio, prioridad, descripcion, estado, fechaRegistro }`
-— Estados: `PENDIENTE`, `EN_ATENCION`, `FINALIZADO`.
-
-## Solución de problemas: `adb.exe: device offline`
+El proyecto incluye `eas.json` con un perfil `preview` para APK de prueba y `production` para AAB. Para compilar, el equipo debe iniciar sesión en Expo y vincular el proyecto a su cuenta:
 
 ```bash
-adb kill-server
-adb start-server
-adb devices        # debe decir "device", no "offline"
+npx eas-cli@latest login
+npx eas-cli@latest build:configure
+npx eas-cli@latest build --platform android --profile preview
 ```
-Si sigue offline: en Device Manager → ⋮ → **Cold Boot Now** (o **Wipe Data**), cierra otros emuladores y actualiza
-*Android Emulator* y *Platform-Tools* en SDK Manager.
 
-## Integrantes
+Para generar el AAB de producción, usa `npx eas-cli@latest build --platform android --profile production`. EAS solicita configurar las credenciales de firma cuando corresponda.
 
-- _Katiuska Rodriguez Toro _
-- _Edwars Badajos Rojas_
-- _Ariana Camila Oortiz Ruiz  _
+La configuración y compilación final deben probarse en el equipo que tenga acceso al proyecto Expo/Firebase. El archivo instalable generado por EAS se descarga desde el enlace que proporciona el servicio.
+
+## Nota de sincronización y pruebas
+
+- SQLite conserva datos en el dispositivo; borrar los datos de la app o desinstalarla elimina su base local.
+- Firebase es opcional hasta completar `.env` y publicar las reglas.
+- La cola local evita repetir documentos remotos al reutilizar el mismo ID, pero cualquier conflicto de edición simultánea entre dispositivos debe probarse y definirse según las reglas del negocio.
+- Antes de la entrega se debe probar en Android: crear/editar/eliminar, reiniciar para comprobar persistencia, probar modo avión, recuperar conexión y revisar Firebase Console.
