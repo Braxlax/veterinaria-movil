@@ -52,6 +52,9 @@ export type IconName =
   | 'lock'
   | 'account-plus'
   | 'bell-ring'
+  | 'wifi-off'
+  | 'refresh'
+  | 'image'
  ;
 
 type ChipStyle = { label: string; bg: string; fg: string };

@@ -1,14 +1,21 @@
-import { SOLICITUDES_INICIALES } from '../data/solicitudes';
-
-const esperar = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+import { Solicitud } from '../../domain/entities/solicitud';
+import { eliminarRegistro, guardarRegistro, obtenerRegistros } from '../database/database';
+import { revisarConexionYSincronizar } from '../sync/networkService';
+import { firebaseConfigurado, obtenerAuth } from '../firebase/config';
 
 export const solicitudService = {
-  async obtenerTodas() {
-    await esperar(700);
-    return SOLICITUDES_INICIALES.map((s) => ({ ...s }));
+  async obtenerTodas(): Promise<Solicitud[]> {
+    return obtenerRegistros<Solicitud>('solicitudes');
   },
-
-  async refrescar() {
-    await esperar(800);
+  async guardar(solicitud: Solicitud): Promise<void> {
+    await guardarRegistro('solicitudes', solicitud, firebaseConfigurado ? obtenerAuth()?.currentUser?.uid : null);
+    void revisarConexionYSincronizar();
+  },
+  async eliminar(id: string): Promise<void> {
+    await eliminarRegistro('solicitudes', id, firebaseConfigurado ? obtenerAuth()?.currentUser?.uid : null);
+    void revisarConexionYSincronizar();
+  },
+  async refrescar(): Promise<void> {
+    await revisarConexionYSincronizar();
   },
 };

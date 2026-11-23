@@ -17,6 +17,7 @@ export default function ServiciosScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
       <Text style={styles.intro}>Precios referenciales. El costo final depende de la evaluación del veterinario.</Text>
+      <PrimaryButton title="Probar consumo de API REST" variant="outline" onPress={() => router.push('/catalogo-api')} style={{ marginBottom: spacing.lg }} />
       {TIPOS_SERVICIO.map((t) => {
         const info = SERVICIO_INFO[t];
         const cat = CATALOGO_SERVICIOS[t];

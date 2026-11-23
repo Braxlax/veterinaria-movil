@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '../components/AppIcon';
@@ -13,6 +14,8 @@ import { IconName } from '../constants/ui';
 import { iniciales } from '../utils/format';
 import { ROL_INFO } from '../constants/ui';
 import { permisosDe } from '../../domain/rules/permisos';
+import { firebaseConfigurado } from '../../infraestructure/firebase/config';
+import { seleccionarYSubirEvidencia } from '../../infraestructure/services/evidenciaService';
 import { colors, radius, shadow, spacing } from '../theme/theme';
 
 const ENLACES: { titulo: string; icon: IconName; ruta: string }[] = [{ titulo: 'Servicios y precios', icon: 'tag', ruta: '/servicios' }];
@@ -22,6 +25,19 @@ export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const { sesion, cerrarSesion } = useAuth();
+  const [subiendoEvidencia, setSubiendoEvidencia] = useState(false);
+
+  const subirEvidencia = async () => {
+    setSubiendoEvidencia(true);
+    try {
+      const url = await seleccionarYSubirEvidencia();
+      if (url) toast('Imagen subida a Firebase Storage correctamente', 'success');
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'No se pudo subir la imagen', 'error');
+    } finally {
+      setSubiendoEvidencia(false);
+    }
+  };
 
   if (!sesion) return null;
   const p = permisosDe(sesion.rol);
@@ -70,6 +86,8 @@ export default function PerfilScreen() {
         ))}
       </View>
 
+      {firebaseConfigurado ? <PrimaryButton title="Subir evidencia a Firebase Storage" icon="image" loading={subiendoEvidencia} onPress={subirEvidencia} style={{ marginTop: spacing.md }} /> : null}
+
       <SectionHeader titulo="Información" />
       {ENLACES.map(e => (
         <Pressable
@@ -85,7 +103,7 @@ export default function PerfilScreen() {
       ))}
 
       <PrimaryButton title="Cerrar sesión" icon="logout" variant="danger" onPress={salir} style={{ marginTop: spacing.xl }} />
-      <Text style={styles.version}>Mr. Patitas · versión 1.0.0 · datos en memoria</Text>
+      <Text style={styles.version}>Mr. Patitas · versión 1.0.0 · SQLite local</Text>
     </ScrollView>
   );
 }

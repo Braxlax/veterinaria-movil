@@ -32,7 +32,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mr. Patitas necesita acceder a tus fotos para subir evidencias a Firebase Storage."
+        }
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": false,
