@@ -42,11 +42,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../../assets/images/tabIcons/fondobienvenida.png')}
-      resizeMode="cover"
-      style={styles.background}
-    >
+    <ImageBackground source={require('../../../assets/images/tabIcons/fondobienvenida.png')} resizeMode="cover" style={styles.background}>
       <ScrollView
         bounces={false}
         contentContainerStyle={[styles.container, { paddingTop: 20 + insets.top, paddingBottom: spacing.xl + insets.bottom }]}
@@ -64,69 +60,69 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.card}>
-        <Text style={styles.title}>¡Bienvenido!</Text>
-        <Text style={styles.description}>Inicia sesión para continuar</Text>
+          <Text style={styles.title}>¡Bienvenido!</Text>
+          <Text style={styles.description}>Inicia sesión para continuar</Text>
 
-        <FormField
-          label="Usuario"
-          required
-          placeholder="Ingresa tu usuario"
-          value={usuario}
-          onChangeText={value => {
-            setUsuario(value);
-            setError('');
-          }}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="next"
-        />
+          <FormField
+            label="Usuario"
+            required
+            placeholder="Ingresa tu usuario"
+            value={usuario}
+            onChangeText={value => {
+              setUsuario(value);
+              setError('');
+            }}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+          />
 
-        <FormField
-          label="Contraseña"
-          required
-          placeholder="Ingresa tu contraseña"
-          value={contrasena}
-          onChangeText={value => {
-            setContrasena(value);
-            setError('');
-          }}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          onSubmitEditing={handleLogin}
-          returnKeyType="done"
-        />
+          <FormField
+            label="Contraseña"
+            required
+            placeholder="Ingresa tu contraseña"
+            value={contrasena}
+            onChangeText={value => {
+              setContrasena(value);
+              setError('');
+            }}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            onSubmitEditing={handleLogin}
+            returnKeyType="done"
+          />
 
-        {error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+          {error ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {error}
+            </Text>
+          ) : null}
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={cargando ? 'Iniciando sesión' : 'Iniciar sesión'}
+            accessibilityState={{ busy: cargando, disabled: cargando }}
+            disabled={cargando}
+            style={[styles.pawButton, cargando && styles.pawButtonDisabled]}
+            onPress={handleLogin}
+          >
+            <View style={styles.pawTop}>
+              <View style={[styles.pawToe, styles.toe1]} />
+              <View style={[styles.pawToe, styles.toe2]} />
+              <View style={[styles.pawToe, styles.toe3]} />
+              <View style={[styles.pawToe, styles.toe4]} />
+            </View>
+
+            <View style={styles.pawMain}>
+              <Text style={styles.pawText}>{cargando ? 'Ingresando...' : 'Iniciar sesión'}</Text>
+            </View>
+          </Pressable>
+          <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
+          <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>
+            ¿No tienes cuenta? Regístrate
           </Text>
-        ) : null}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={cargando ? 'Iniciando sesión' : 'Iniciar sesión'}
-          accessibilityState={{ busy: cargando, disabled: cargando }}
-          disabled={cargando}
-          style={[styles.pawButton, cargando && styles.pawButtonDisabled]}
-          onPress={handleLogin}
-        >
-          <View style={styles.pawTop}>
-            <View style={[styles.pawToe, styles.toe1]} />
-            <View style={[styles.pawToe, styles.toe2]} />
-            <View style={[styles.pawToe, styles.toe3]} />
-            <View style={[styles.pawToe, styles.toe4]} />
-          </View>
-
-          <View style={styles.pawMain}>
-            <Text style={styles.pawText}>{cargando ? 'Ingresando...' : 'Iniciar sesión'}</Text>
-          </View>
-        </Pressable>
-        <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
-        <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>
-          ¿No tienes cuenta? Regístrate
-        </Text>
-        <Text style={styles.demo}>Demo: admin / patitas123 · usuario / usuario123</Text>
+          <Text style={styles.demo}>Demo: admin / patitas123 · usuario / usuario123</Text>
         </View>
       </ScrollView>
     </ImageBackground>
