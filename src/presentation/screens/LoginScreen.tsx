@@ -2,9 +2,9 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { firebaseConfigurado } from '../../infraestructure/firebase/config';
 import { FormField } from '../components/FormField';
 import { useAuth } from '../store/AuthContext';
-import { firebaseConfigurado } from '../../infraestructure/firebase/config';
 import { colors, radius, spacing } from '../theme/theme';
 
 export default function LoginScreen() {
@@ -15,7 +15,6 @@ export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
-  const [mostrarContrasena, setMostrarContrasena] = useState(false);
 
   const handleLogin = async () => {
     if (cargando) return;
@@ -76,16 +75,12 @@ export default function LoginScreen() {
             setContrasena(value);
             setError('');
           }}
-          secureTextEntry={!mostrarContrasena}
+          secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
           onSubmitEditing={handleLogin}
           returnKeyType="done"
         />
-
-        <Text accessibilityRole="button" onPress={() => setMostrarContrasena(actual => !actual)} style={styles.showPassword}>
-          {mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-        </Text>
 
         {error ? (
           <Text accessibilityRole="alert" style={styles.error}>
@@ -106,7 +101,9 @@ export default function LoginScreen() {
           </View>
         </Pressable>
         <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
-        <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>¿No tienes cuenta? Regístrate</Text>
+        <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>
+          ¿No tienes cuenta? Regístrate
+        </Text>
         {!firebaseConfigurado ? <Text style={styles.demo}>Demo: admin / patitas123 · usuario / usuario123</Text> : null}
       </View>
     </ImageBackground>
@@ -226,15 +223,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.xl,
   },
-  showPassword: {
-    alignSelf: 'flex-end',
-    color: colors.primaryDark,
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
   error: {
     color: colors.danger,
     fontSize: 13,
@@ -242,7 +230,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   loginButton: { marginTop: spacing.sm },
-  registerLink: { color: colors.brand, fontSize: 14, fontWeight: '700', textAlign: 'center', marginTop: spacing.md, paddingVertical: spacing.xs },
+  registerLink: {
+    color: colors.brand,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.xs,
+  },
   demo: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: spacing.sm },
   footnote: {
     color: colors.textMuted,
