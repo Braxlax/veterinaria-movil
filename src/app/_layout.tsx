@@ -7,6 +7,7 @@ import { MascotaProvider } from '../presentation/store/MascotaContext';
 import { SolicitudProvider } from '../presentation/store/SolicitudContext';
 import { ToastProvider } from '../presentation/store/ToastContext';
 import { colors, headerOptions } from '../presentation/theme/theme';
+import { observarConexion, revisarConexionYSincronizar } from '../infraestructure/sync/networkService';
 
 function RootStack() {
   const { autenticado } = useAuth();
@@ -34,12 +35,19 @@ function RootStack() {
         <Stack.Screen name="mascota-nueva" options={{ title: 'Nueva mascota' }} />
         <Stack.Screen name="mascota-detalle" options={{ title: 'Ficha de la mascota' }} />
         <Stack.Screen name="servicios" options={{ title: 'Servicios y precios' }} />
+        <Stack.Screen name="catalogo-api" options={{ title: 'Catálogo REST (demo)' }} />
       </Stack.Protected>
     </Stack>
   );
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    void revisarConexionYSincronizar();
+    const suscripcion = observarConexion();
+    return () => suscripcion.remove();
+  }, []);
+
   return (
     <AuthProvider>
       <SolicitudProvider>

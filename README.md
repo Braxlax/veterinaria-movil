@@ -1,151 +1,136 @@
-# 🐾 Centro Médico Mr. Patitas — App de gestión veterinaria
+# 🐾 Centro Médico Mr. Patitas
 
-App móvil (React Native + Expo Router) para gestionar una clínica veterinaria: solicitudes de atención, agenda de citas,
-fichas de mascotas con carnet de vacunación e historial clínico, y acceso por roles.
-Evaluación parcial — Desarrollo de Aplicaciones Móviles 1 (IDAT).
+Aplicación móvil con React Native, Expo Router y TypeScript para gestionar solicitudes de atención, agenda de citas, mascotas, vacunas e historial clínico.
 
-> Los datos viven **en memoria** (`useReducer` + Context). No usa base de datos: al cerrar la app se reinician.
+Este repositorio conserva el contexto veterinario del proyecto del parcial e incorpora persistencia local con SQLite, una integración opcional con Firebase y un ejemplo de consumo REST. **La rúbrica compartida describe un emprendimiento de productos artesanales y gestión de pedidos**; si el docente exige literalmente ese caso, todavía hay que adaptar el modelo y las pantallas de negocio (cliente, productos, cantidad, precio y pedido) antes de afirmar que se cumple toda la rúbrica.
 
 ## Requisitos
 
-- Node.js 20.19.4 o superior (también sirven 22.13+ y 24.3+, requisito de React Native 0.86) y npm
-- JDK 17 (viene incluido con Android Studio) solo si vas a compilar con `npx expo run:android`
-- Android Studio con un emulador (AVD) creado **o** un celular Android con "Depuración USB" (en iOS: Xcode + simulador, solo macOS)
-- Variables de entorno `ANDROID_HOME` y `platform-tools` en el `PATH` (para que funcione `adb`)
-- Alternativa sin emulador: app **Expo Go** en el celular (misma red Wi-Fi que la PC), siempre que su versión sea compatible con el SDK 57 de Expo
+- Node.js compatible con la versión de Expo declarada en `package.json` y npm.
+- Android Studio con un emulador Android o un dispositivo físico con depuración USB para probar las funciones nativas.
+- Para Firebase: un proyecto propio en Firebase Console y sus reglas de seguridad publicadas.
 
-## Instalación
+## Instalación y ejecución
 
-```bash
-npm install
-```
+1. Descomprime el proyecto y abre su carpeta en Visual Studio Code.
+2. Instala las dependencias:
 
-## Ejecución
+   ```bash
+   npm install
+   ```
 
-1. Abre el emulador desde Android Studio (Device Manager ▶) y espera a que cargue el home de Android.
-2. Verifica que esté en línea: `adb devices` debe mostrar `emulator-5554   device`.
-3. Inicia la app:
+3. Ejecuta la aplicación:
 
-```bash
-npx expo start --android     # emulador / dispositivo Android
-npx expo start --ios         # simulador iOS (macOS)
-```
+   ```bash
+   npx expo start
+   ```
 
-Alternativa: `npx expo start` y presionar `a` (Android) o `i` (iOS), o escanear el QR con Expo Go.
-Si Metro muestra datos viejos: `npx expo start -c`.
+4. Pulsa `a` para abrir Android o escanea el QR con una versión de Expo Go compatible. Para limpiar la caché: `npx expo start -c`.
 
-> El proyecto usa Expo y no tiene carpetas `android/` ni `ios/`, por eso no se ejecuta con `npx react-native run-android`.
-> El equivalente es `npx expo start --android`. Si necesitas compilar la app nativa: `npx expo run:android` (o `run:ios` en macOS).
+## SQLite: persistencia local
 
-## Cuentas de prueba
+La aplicación utiliza `expo-sqlite`. La base `mrpatitas.db` y sus tablas se crean automáticamente en el almacenamiento local de la aplicación. No hay que instalar un servidor SQL ni crear el archivo manualmente.
 
-El acceso se hace escribiendo usuario y contraseña en el Login (no hay botones de acceso rápido).
-Hay solo dos roles:
+Código principal:
 
-| Rol           | Usuario   | Contraseña   | Qué ve / puede hacer                                                                                                                                             |
-| ------------- | --------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Administrador | `admin`   | `patitas123` | Todo: solicitudes, citas, mascotas, vacunas e historial clínico; editar y eliminar                                                                               |
-| Cliente       | `usuario` | `usuario123` | Solo **sus** mascotas, solicitudes y citas; puede registrar solicitudes, mascotas y citas, y cancelar sus citas; no puede editar estados ni eliminar solicitudes |
+- `src/infraestructure/database/database.ts`: inicializa SQLite, crea las tablas `mascotas`, `citas`, `solicitudes` y `sync_outbox`, y proporciona operaciones de persistencia.
+- `src/infraestructure/services/`: consulta SQLite y guarda los cambios de los Context.
+- `src/presentation/store/`: mantiene el estado visible de la interfaz y llama a los repositorios para persistir cambios.
 
-Desde **Crear una cuenta** se registran clientes nuevos (rol Cliente).
-Los permisos están centralizados en `src/domain/rules/permisos.ts`.
+Al primer inicio, se copian los datos de demostración si las tablas están vacías. Los cambios posteriores se guardan localmente y deben seguir disponibles al reiniciar la aplicación. La cola `sync_outbox` registra cambios pendientes de enviar a Firebase.
 
-## Pantallas
+## Firebase: configuración externa necesaria
 
-| Pantalla                   | Ruta               | Descripción                                                                                                                                                                       |
-| -------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Login                      | `/`                | Usuario y contraseña con mostrar/ocultar, mensaje de error general y enlace a registro. Muestra un texto con las cuentas de prueba                                                |
-| Registro                   | `/registro`        | Validaciones bajo cada campo, contraseña repetida y alta de clientes con perfil guardado                                                                                          |
-| **Home / Bienvenida**      | `/home`            | Primera pantalla tras iniciar sesión: saludo por rol, servicios de la clínica y accesos a _Consultar solicitudes_, _Registrar nueva solicitud_, _Ir a mi panel_ y _Cerrar sesión_ |
-| **Inicio** (pestaña)       | `/inicio`          | Saludo por rol, solicitudes urgentes, resumen por estado, accesos rápidos, próximas citas, recordatorios de vacunas                                                               |
-| **Solicitudes** (pestaña)  | `/solicitudes`     | Listado con buscador, filtros por estado, pull-to-refresh, tarjetas con chips                                                                                                     |
-| Nueva solicitud            | `/crear`           | Formulario validado; puede partir de una mascota registrada                                                                                                                       |
-| Detalle / Editar solicitud | `/detalle`         | Administrador: cambia estado, prioridad y descripción y elimina con confirmación. Cliente: solo lectura. Ambos pueden agendar una cita                                            |
-| **Agenda** (pestaña)       | `/agenda`          | Citas por día, completar / cancelar                                                                                                                                               |
-| Agendar cita               | `/cita-nueva`      | Mascota, servicio, veterinario, día y horario. No permite horarios pasados ni dobles reservas del mismo veterinario                                                               |
-| **Mascotas** (pestaña)     | `/mascotas`        | Listado con búsqueda y estado de vacunación                                                                                                                                       |
-| Registrar / editar mascota | `/mascota-nueva`   | Misma pantalla para crear y editar                                                                                                                                                |
-| Ficha de mascota           | `/mascota-detalle` | Datos, carnet de vacunación (vigente / por vencer / vencida), historial clínico, acciones rápidas                                                                                 |
-| **Perfil** (pestaña)       | `/perfil`          | Datos del usuario, permisos de su rol, cerrar sesión                                                                                                                              |
-| Servicios y precios        | `/servicios`       | Catálogo con precio y duración; atajo para agendar                                                                                                                                |
+Firebase no funcionará hasta configurar un proyecto propio. No se incluyen credenciales de un proyecto Firebase porque deben pertenecer al equipo.
 
-## Cómo probar el flujo CRUD
+1. Entra a https://console.firebase.google.com/ y crea un proyecto.
+2. Registra una aplicación web dentro del proyecto Firebase y copia su configuración.
+3. Activa **Authentication → Sign-in method → Email/Password**.
+4. Crea la base de **Cloud Firestore** y activa **Storage** si se cargarán archivos.
+5. Copia `.env.example` como `.env` y completa los valores `EXPO_PUBLIC_FIREBASE_*` con la configuración de tu proyecto.
+6. Publica las reglas de `firestore.rules` y `storage.rules` en Firebase Console (los archivos están referenciados en `firebase.json`).
+7. Reinicia Expo para que lea las variables:
 
-| Acción               | Cómo probarla                                                                                                                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Listar**           | Inicia sesión con `admin` → pestaña **Solicitudes** (5 de ejemplo).                                                                                                                            |
-| **Buscar / Filtrar** | Escribe en el buscador (mascota, cliente o teléfono) y usa los chips Todos / Pendiente / En atención / Finalizado.                                                                             |
-| **Crear**            | Botón **Nueva solicitud** → deja campos vacíos para ver las validaciones bajo cada input → completa y **Registrar solicitud**. Aparece un toast y la nueva queda en la lista como _Pendiente_. |
-| **Ver detalle**      | Toca cualquier tarjeta.                                                                                                                                                                        |
-| **Actualizar**       | Con `admin`, en el detalle cambia **estado**, **prioridad** o **descripción** → **Guardar cambios**.                                                                                           |
-| **Eliminar**         | Con `admin`: botón **Eliminar** en la tarjeta o en el detalle → confirma en el diálogo.                                                                                                        |
-| **Roles**            | Cierra sesión (Perfil) y entra con `usuario`: solo verá lo suyo y no podrá editar estados ni eliminar solicitudes.                                                                             |
-| **Mascotas y citas** | Pestaña Mascotas → ficha → _Agendar cita_. Con `admin`, en la ficha usa **+ Registrar** para vacunas e historial.                                                                              |
+   ```bash
+   npx expo start -c
+   ```
 
-## Arquitectura (Clean Architecture)
+Cuando las variables de Firebase no están configuradas, la app mantiene el modo de demostración con las cuentas locales indicadas más abajo. Cuando Firebase sí está configurado, el login utiliza correo electrónico y contraseña de Firebase Authentication. El registro crea cuentas con rol `cliente`. Para probar el rol `admin`, registra primero la cuenta y cambia su campo `rol` a `admin` en el documento correspondiente de la colección `usuarios` desde Firebase Console.
 
-```
+**Importante:** las variables `EXPO_PUBLIC_*` se incorporan al cliente móvil y no deben contener claves privadas de servidor. La seguridad de los datos depende de las reglas de Firestore/Storage, no de ocultar la configuración del cliente.
+
+### Archivos de integración Firebase
+
+- `src/infraestructure/firebase/config.ts`: inicializa Firebase cuando existe configuración.
+- `src/infraestructure/firebase/authFirebaseService.ts`: registro, login, cierre y recuperación de sesión.
+- `src/infraestructure/firebase/firestoreService.ts`: guarda o elimina documentos remotos.
+- `src/infraestructure/firebase/storageService.ts`: carga un archivo y devuelve su URL. Desde Perfil se puede elegir una imagen y subirla a la carpeta privada del usuario en Storage.
+- `src/infraestructure/sync/syncService.ts`: procesa la cola local sin duplicar documentos, usando el ID local como ID remoto.
+- `src/infraestructure/sync/networkService.ts`: comprueba la conectividad y reintenta cuando vuelve internet.
+
+Las colecciones de Firestore utilizadas para sincronización son `mascotas`, `citas` y `solicitudes`. La sincronización de registros nuevos o modificados requiere una sesión Firebase activa. Si no hay configuración o conexión, las operaciones permanecen en la cola local.
+
+## API REST de demostración
+
+La pantalla **Servicios y precios → Probar consumo de API REST** consulta el endpoint público `https://dummyjson.com/products?limit=30`. Muestra carga, errores y reintento. Es un catálogo genérico de demostración, no un catálogo veterinario real. Se puede reemplazar la URL base con `EXPO_PUBLIC_API_BASE_URL`.
+
+Código principal:
+
+- `src/infraestructure/api/apiClient.ts`: petición HTTP y errores de respuesta.
+- `src/infraestructure/services/catalogoService.ts`: obtiene y tipa la lista de productos.
+- `src/presentation/screens/CatalogoApiScreen.tsx`: interfaz de carga, error y resultados.
+
+## Cuentas de demostración
+
+Solo se utilizan cuando no se ha configurado Firebase:
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `patitas123` |
+| Cliente | `usuario` | `usuario123` |
+
+En modo Firebase, el inicio de sesión utiliza el correo electrónico de la cuenta.
+
+## Estructura principal
+
+```text
 src/
-├── app/                      Rutas de Expo Router (delgadas: solo enlazan URL → pantalla). home.tsx es la Bienvenida
-│   └── (tabs)/               Barra de pestañas: Inicio, Solicitudes, Agenda, Mascotas, Perfil
-├── domain/                   Reglas del negocio (sin React, Expo ni acceso a datos)
-│   ├── entities/             Solicitud, Mascota, Cita, Usuario
-│   ├── repositories/         Interfaces (contratos) de acceso a datos: solicitud, mascota, cita, auth
-│   ├── use-cases/            crearSolicitud, crearMascota, registrarHistorialClinico, agendarCita (+ regla de horarios ocupados)
-│   ├── rules/                permisos, validators, ordenar
-│   ├── utils/                fechas, id
-│   └── constants/            clinica (catálogo de servicios, horarios, veterinarios)
-├── infraestructure/          Origen de los datos
-│   ├── data/                 Datos de ejemplo en memoria
-│   ├── repositories/         Implementan los contratos de domain/repositories (usan los servicios)
-│   ├── services/             Fuente de datos simulada: solicitud, mascota, cita, auth
-│   └── storage/              Reservada para persistencia local
-└── presentation/             Interfaz y estado de la app
-    ├── screens/              Pantallas
-    ├── components/           Reutilizables: AppIcon, Chip, FormField, OptionSelector, PrimaryButton, SearchBar,
-    │                         FilterChips, SolicitudCard, MascotaCard, CitaCard, Fab, SelectorDia,
-    │                         RegistroClinicoModal, EmptyState, ...
-    ├── store/                Estado global (useReducer + Context): auth, solicitudes, mascotas, citas, toast
-    ├── hooks/                usePermisos, useDatosVisibles (filtra datos según el rol)
-    ├── theme/                Sistema de diseño (colores, espaciado, tipografía)
-    ├── constants/            ui (iconos, colores y etiquetas de estados, servicios, especies y roles)
-    └── utils/                alerts, format
+├── app/                       # Rutas y navegación Expo Router
+├── domain/                    # Entidades, reglas, casos de uso y contratos
+├── infraestructure/
+│   ├── api/                   # Cliente REST
+│   ├── database/              # SQLite y cola local de sincronización
+│   ├── firebase/              # Authentication, Firestore y Storage
+│   ├── sync/                  # Conectividad y sincronización
+│   ├── data/                  # Datos iniciales de demostración
+│   ├── repositories/          # Implementaciones de repositorios
+│   └── services/              # Servicios de datos y catálogo REST
+└── presentation/
+    ├── components/            # Componentes reutilizables
+    ├── screens/               # Pantallas
+    ├── store/                 # Context y reducers
+    ├── hooks/                 # Hooks personalizados
+    ├── theme/                 # Sistema de diseño
+    └── utils/                 # Alertas y formato
 ```
 
-**Regla de dependencias:** `domain` no importa de ninguna otra capa; `infraestructure` solo importa de `domain`
-(implementa sus interfaces); `presentation` importa de `domain` e `infraestructure` (los Contexts de `store/` son el
-único punto donde se conecta con los servicios).
+## Generar una compilación Android
 
-**Flujo de datos:** Pantalla → acción del Context → caso de uso (`domain/use-cases`) → `dispatch` → reducer → nuevo estado → re-render.
-La carga inicial pasa por el repositorio de `infraestructure/repositories`, que cumple el contrato de `domain/repositories` y obtiene los datos del servicio.
-Las pantallas no contienen reglas de negocio: validaciones y permisos en `domain/rules`,
-creación de entidades y regla de horarios en `domain/use-cases`, y CRUD en los reducers.
-
-**Hooks usados:** `useState` (formularios, filtros), `useEffect` (carga inicial simulada), `useReducer` + `Context`
-(CRUD en memoria y sesión), `useMemo` / `useCallback` (filtros y acciones).
-
-## Diseño (UI/UX)
-
-- Sistema de diseño único en `presentation/theme/theme.ts` (colores, espaciado, radios, tipografía, sombras).
-- Iconografía coherente con Material Community Icons (`@expo/vector-icons`) mediante `AppIcon`.
-- Chips de estado/prioridad, tarjetas con barra de prioridad, estados vacíos y de carga, y mensajes de error bajo cada campo.
-- Feedback en cada acción: toast animado, confirmaciones al eliminar/cancelar y botón con indicador de carga en el registro.
-- Botones de acción con altura mínima de 52 dp y etiquetas de accesibilidad.
-
-## Modelo de datos
-
-`Solicitud { id, clienteNombre, telefono, mascotaNombre, tipoServicio, prioridad, descripcion, estado, fechaRegistro, mascotaId?, creadoPor? }`
-— Estados: `PENDIENTE`, `EN_ATENCION`, `FINALIZADO`.
-`Mascota { id, nombre, especie, raza, edadAnios, pesoKg, duenoNombre, duenoTelefono, duenoUsuario?, alergias, vacunas[], historial[] }`
-`Cita { id, mascotaId, mascotaNombre, duenoUsuario?, tipoServicio, fechaHora, veterinario, motivo, estado, creadoPor }`
-`Cuenta { usuario, contrasena, rol, nombre, apellidos, correo, telefono }` — roles: `admin`, `cliente`.
-
-## Solución de problemas: `adb.exe: device offline`
+El proyecto incluye `eas.json` con un perfil `preview` para APK de prueba y `production` para AAB. Para compilar, el equipo debe iniciar sesión en Expo y vincular el proyecto a su cuenta:
 
 ```bash
-adb kill-server
-adb start-server
-adb devices        # debe decir "device", no "offline"
+npx eas-cli@latest login
+npx eas-cli@latest build:configure
+npx eas-cli@latest build --platform android --profile preview
 ```
 
-Si sigue offline: en Device Manager → ⋮ → **Cold Boot Now** (o **Wipe Data**), cierra otros emuladores y vuelve a ejecutar.
+Para generar el AAB de producción, usa `npx eas-cli@latest build --platform android --profile production`. EAS solicita configurar las credenciales de firma cuando corresponda.
+
+La configuración y compilación final deben probarse en el equipo que tenga acceso al proyecto Expo/Firebase. El archivo instalable generado por EAS se descarga desde el enlace que proporciona el servicio.
+
+## Nota de sincronización y pruebas
+
+- SQLite conserva datos en el dispositivo; borrar los datos de la app o desinstalarla elimina su base local.
+- Firebase es opcional hasta completar `.env` y publicar las reglas.
+- La cola local evita repetir documentos remotos al reutilizar el mismo ID, pero cualquier conflicto de edición simultánea entre dispositivos debe probarse y definirse según las reglas del negocio.
+- Antes de la entrega se debe probar en Android: crear/editar/eliminar, reiniciar para comprobar persistencia, probar modo avión, recuperar conexión y revisar Firebase Console.

@@ -6,6 +6,7 @@ import { AppIcon } from '../components/AppIcon';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useAuth } from '../store/AuthContext';
+import { firebaseConfigurado } from '../../infraestructure/firebase/config';
 import { useToast } from '../store/ToastContext';
 import {
   hayErrores,
@@ -101,7 +102,7 @@ export default function RegistroScreen() {
 
         <PrimaryButton title="Crear cuenta" icon="account-plus" loading={cargando} onPress={handleRegistro} style={{ marginTop: spacing.sm }} />
         <PrimaryButton title="Volver al inicio de sesión" variant="outline" onPress={() => router.back()} style={{ marginTop: spacing.sm }} />
-        <Text style={styles.privacy}>Las cuentas nuevas tienen rol Cliente. La información se guarda solo en la memoria de la app durante esta demostración.</Text>
+        <Text style={styles.privacy}>{firebaseConfigurado ? 'Las cuentas se registran con Firebase Authentication y tienen rol Cliente.' : 'Modo de demostración: las cuentas se guardan en memoria y se reinician al cerrar la aplicación.'}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

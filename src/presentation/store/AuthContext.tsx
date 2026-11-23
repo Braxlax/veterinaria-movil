@@ -1,5 +1,9 @@
 import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
+import { useEffect } from 'react';
 import { authRepository } from '../../infraestructure/repositories/authRepository';
+import { firebaseConfigurado } from '../../infraestructure/firebase/config';
+import { observarSesionFirebase } from '../../infraestructure/firebase/authFirebaseService';
+import { sincronizarPendientes } from '../../infraestructure/sync/syncService';
 import { DatosRegistro, Sesion } from '../../domain/entities/usuario';
 import { authInitialState, authReducer } from './authReducer';
 
@@ -10,7 +14,7 @@ interface AuthContextType {
   autenticado: boolean;
   iniciarSesion: (usuario: string, contrasena: string) => Promise<Resultado>;
   registrarCuenta: (datos: DatosRegistro) => Promise<Resultado>;
-  cerrarSesion: () => void;
+  cerrarSesion: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,15 +22,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, authInitialState);
 
+  useEffect(() => {
+    if (!firebaseConfigurado) return;
+    return observarSesionFirebase((sesion) => {
+      if (sesion) {
+        dispatch({ type: 'LOGIN', payload: sesion });
+        void sincronizarPendientes();
+      } else dispatch({ type: 'LOGOUT' });
+    });
+  }, []);
+
   const iniciarSesion = useCallback(async (usuario: string, contrasena: string): Promise<Resultado> => {
-    const sesion = await authRepository.autenticar(usuario, contrasena);
-    if (!sesion) return { ok: false, mensaje: 'Usuario o contraseña incorrectos.' };
-    dispatch({ type: 'LOGIN', payload: sesion });
-    return { ok: true };
+    try {
+      const sesion = await authRepository.autenticar(usuario, contrasena);
+      if (!sesion) return { ok: false, mensaje: 'Usuario o contraseña incorrectos.' };
+      dispatch({ type: 'LOGIN', payload: sesion });
+      void sincronizarPendientes();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, mensaje: error instanceof Error ? error.message : 'No se pudo iniciar sesión.' };
+    }
   }, []);
 
   const registrarCuenta = useCallback((datos: DatosRegistro) => authRepository.registrar(datos), []);
-  const cerrarSesion = useCallback(() => dispatch({ type: 'LOGOUT' }), []);
+  const cerrarSesion = useCallback(async () => {
+    try { await authRepository.cerrarSesion(); } finally { dispatch({ type: 'LOGOUT' }); }
+  }, []);
 
   const value = useMemo(
     () => ({ sesion: state.sesion, autenticado: state.sesion !== null, iniciarSesion, registrarCuenta, cerrarSesion }),

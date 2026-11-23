@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: radius.pill,
     ...shadow.card,
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.25)',
+    shadowOpacity: 0.25,
     elevation: 6,
   },
   pressed: { transform: [{ scale: 0.96 }], opacity: 0.92 },
