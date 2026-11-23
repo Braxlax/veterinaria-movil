@@ -4,16 +4,10 @@
     "strict": true,
     "jsx": "react-native",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/assets/*": [
-        "./assets/*"
-      ]
+      "firebase/auth": ["./node_modules/@firebase/auth/dist/rn/index.rn.d.ts"],
+      "@/*": ["./src/*"],
+      "@/assets/*": ["./assets/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"]
 }

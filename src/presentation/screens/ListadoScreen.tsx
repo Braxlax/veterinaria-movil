@@ -1,21 +1,22 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ESTADOS, EstadoSolicitud, Solicitud } from '../../domain/entities/solicitud';
+import { ordenarSolicitudes } from '../../domain/rules/ordenar';
+import { BannerConexion } from '../components/BannerConexion';
 import { EmptyState } from '../components/EmptyState';
 import { Fab } from '../components/Fab';
 import { FilterChips, FilterOption } from '../components/FilterChips';
 import { ResumenEstados } from '../components/ResumenEstados';
 import { SearchBar } from '../components/SearchBar';
 import { SolicitudCard } from '../components/SolicitudCard';
+import { ESTADO_INFO } from '../constants/ui';
 import { useDatosVisibles } from '../hooks/useDatosVisibles';
 import { usePermisos } from '../hooks/usePermisos';
-import { ESTADOS, EstadoSolicitud, Solicitud } from '../../domain/entities/solicitud';
 import { useSolicitudes } from '../store/SolicitudContext';
 import { useToast } from '../store/ToastContext';
-import { confirmarEliminacion } from '../utils/alerts';
-import { ESTADO_INFO } from '../constants/ui';
-import { ordenarSolicitudes } from '../../domain/rules/ordenar';
 import { colors, spacing } from '../theme/theme';
+import { confirmarEliminacion } from '../utils/alerts';
 
 type Filtro = 'TODOS' | EstadoSolicitud;
 
@@ -33,18 +34,18 @@ export default function ListadoScreen() {
   const opciones: FilterOption<Filtro>[] = useMemo(
     () => [
       { value: 'TODOS', label: 'Todos', count: solicitudes.length },
-      ...ESTADOS.map((estado) => ({
+      ...ESTADOS.map(estado => ({
         value: estado as Filtro,
         label: ESTADO_INFO[estado].label,
-        count: solicitudes.filter((s) => s.estado === estado).length,
+        count: solicitudes.filter(s => s.estado === estado).length,
       })),
     ],
-    [solicitudes]
+    [solicitudes],
   );
 
   const filtradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    const resultado = solicitudes.filter((s) => {
+    const resultado = solicitudes.filter(s => {
       const coincideEstado = filtro === 'TODOS' || s.estado === filtro;
       const coincideTexto =
         !q || s.mascotaNombre.toLowerCase().includes(q) || s.clienteNombre.toLowerCase().includes(q) || s.telefono.includes(q);
@@ -74,6 +75,7 @@ export default function ListadoScreen() {
 
   return (
     <View style={styles.screen}>
+      <BannerConexion />
       <View style={styles.top}>
         <ResumenEstados solicitudes={solicitudes} />
         <SearchBar value={busqueda} onChangeText={setBusqueda} />
@@ -88,9 +90,11 @@ export default function ListadoScreen() {
       ) : (
         <FlatList
           data={filtradas}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
+          refreshControl={
+            <RefreshControl refreshing={refrescando} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />
+          }
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <EmptyState

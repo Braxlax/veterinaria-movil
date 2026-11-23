@@ -29,6 +29,8 @@ export type IconName =
   | 'pencil'
   | 'eye'
   | 'eye-off'
+  | 'wifi-off'
+  | 'cloud-sync-outline'
   | 'account'
   | 'clock-outline'
   | 'shield-crown'
@@ -54,8 +56,7 @@ export type IconName =
   | 'bell-ring'
   | 'wifi-off'
   | 'refresh'
-  | 'image'
- ;
+  | 'image';
 
 type ChipStyle = { label: string; bg: string; fg: string };
 

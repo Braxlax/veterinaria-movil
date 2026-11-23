@@ -1,20 +1,21 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Cita } from '../../domain/entities/cita';
+import { ordenarCitas } from '../../domain/rules/ordenar';
+import { enDias, formatearDiaCorto, formatearHora, mismoDia } from '../../domain/utils/fechas';
+import { BannerConexion } from '../components/BannerConexion';
 import { CitaCard } from '../components/CitaCard';
 import { EmptyState } from '../components/EmptyState';
 import { Fab } from '../components/Fab';
 import { SelectorDia } from '../components/SelectorDia';
 import { useDatosVisibles } from '../hooks/useDatosVisibles';
 import { usePermisos } from '../hooks/usePermisos';
-import { Cita } from '../../domain/entities/cita';
 import { useAuth } from '../store/AuthContext';
 import { useCitas } from '../store/CitaContext';
 import { useToast } from '../store/ToastContext';
-import { confirmar } from '../utils/alerts';
-import { enDias, formatearDiaCorto, formatearHora, mismoDia } from '../../domain/utils/fechas';
-import { ordenarCitas } from '../../domain/rules/ordenar';
 import { colors, spacing } from '../theme/theme';
+import { confirmar } from '../utils/alerts';
 
 export default function AgendaScreen() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function AgendaScreen() {
 
   return (
     <View style={styles.screen}>
+      <BannerConexion />
       <View style={styles.top}>
         <SelectorDia selected={dia} onSelect={setDia} dias={10} />
         <Text style={styles.resumen}>

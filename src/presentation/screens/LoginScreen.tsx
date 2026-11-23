@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, ImageBackground, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { firebaseConfigurado } from '../../infraestructure/firebase/config';
 import { FormField } from '../components/FormField';
@@ -35,82 +35,92 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground source={require('../../../assets/images/tabIcons/fondobienvenida.png')} resizeMode="cover">
-      <View style={styles.logoImage}>
-        <Image
-          source={require('../../../assets/images/tabIcons/mr.patitas.png')}
-          style={{
-            width: 180,
-            height: 180,
-          }}
-          resizeMode="contain"
-        />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.title}>¡Bienvenido!</Text>
-        <Text style={styles.description}>Inicia sesión para continuar</Text>
-
-        <FormField
-          label={firebaseConfigurado ? 'Correo electrónico' : 'Usuario'}
-          required
-          placeholder={firebaseConfigurado ? 'Ingresa tu correo electrónico' : 'Ingresa tu usuario'}
-          keyboardType={firebaseConfigurado ? 'email-address' : 'default'}
-          value={usuario}
-          onChangeText={value => {
-            setUsuario(value);
-            setError('');
-          }}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="next"
-        />
-
-        <FormField
-          label="Contraseña"
-          required
-          placeholder="Ingresa tu contraseña"
-          value={contrasena}
-          onChangeText={value => {
-            setContrasena(value);
-            setError('');
-          }}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          onSubmitEditing={handleLogin}
-          returnKeyType="done"
-        />
-
-        {error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {error}
-          </Text>
-        ) : null}
-
-        <Pressable style={styles.pawButton} onPress={handleLogin}>
-          <View style={styles.pawTop}>
-            <View style={[styles.pawToe, styles.toe1]} />
-            <View style={[styles.pawToe, styles.toe2]} />
-            <View style={[styles.pawToe, styles.toe3]} />
-            <View style={[styles.pawToe, styles.toe4]} />
+    <ImageBackground source={require('../../../assets/images/tabIcons/fondobienvenida.png')} resizeMode="cover" style={styles.flex}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.logoImage}>
+            <Image
+              source={require('../../../assets/images/tabIcons/mr.patitas.png')}
+              style={{
+                width: 180,
+                height: 180,
+              }}
+              resizeMode="contain"
+            />
           </View>
 
-          <View style={styles.pawMain}>
-            <Text style={styles.pawText}>Iniciar sesión</Text>
+          <View style={styles.card}>
+            <Text style={styles.title}>¡Bienvenido!</Text>
+            <Text style={styles.description}>Inicia sesión para continuar</Text>
+
+            <FormField
+              label={firebaseConfigurado ? 'Correo electrónico' : 'Usuario'}
+              required
+              placeholder={firebaseConfigurado ? 'Ingresa tu correo electrónico' : 'Ingresa tu usuario'}
+              keyboardType={firebaseConfigurado ? 'email-address' : 'default'}
+              value={usuario}
+              onChangeText={value => {
+                setUsuario(value);
+                setError('');
+              }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="next"
+            />
+
+            <FormField
+              label="Contraseña"
+              required
+              placeholder="Ingresa tu contraseña"
+              value={contrasena}
+              onChangeText={value => {
+                setContrasena(value);
+                setError('');
+              }}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={handleLogin}
+              returnKeyType="done"
+            />
+
+            {error ? (
+              <Text accessibilityRole="alert" style={styles.error}>
+                {error}
+              </Text>
+            ) : null}
+
+            <Pressable style={styles.pawButton} onPress={handleLogin}>
+              <View style={styles.pawTop}>
+                <View style={[styles.pawToe, styles.toe1]} />
+                <View style={[styles.pawToe, styles.toe2]} />
+                <View style={[styles.pawToe, styles.toe3]} />
+                <View style={[styles.pawToe, styles.toe4]} />
+              </View>
+
+              <View style={styles.pawMain}>
+                <Text style={styles.pawText}>Iniciar sesión</Text>
+              </View>
+            </Pressable>
+            <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
+            <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>
+              ¿No tienes cuenta? Regístrate
+            </Text>
+            {!firebaseConfigurado ? <Text style={styles.demo}>Demo: admin / patitas123 · usuario / usuario123</Text> : null}
           </View>
-        </Pressable>
-        <Text style={styles.footnote}>Acceso exclusivo para el personal de la veterinaria.</Text>
-        <Text accessibilityRole="button" onPress={() => router.push('/registro')} style={styles.registerLink}>
-          ¿No tienes cuenta? Regístrate
-        </Text>
-        {!firebaseConfigurado ? <Text style={styles.demo}>Demo: admin / patitas123 · usuario / usuario123</Text> : null}
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  scroll: { flexGrow: 1 },
   container: {
     flexGrow: 1,
     justifyContent: 'flex-start',

@@ -2,7 +2,7 @@
 
 Aplicación móvil con React Native, Expo Router y TypeScript para gestionar solicitudes de atención, agenda de citas, mascotas, vacunas e historial clínico.
 
-Este repositorio conserva el contexto veterinario del proyecto del parcial e incorpora persistencia local con SQLite, una integración opcional con Firebase y un ejemplo de consumo REST. **La rúbrica compartida describe un emprendimiento de productos artesanales y gestión de pedidos**; si el docente exige literalmente ese caso, todavía hay que adaptar el modelo y las pantallas de negocio (cliente, productos, cantidad, precio y pedido) antes de afirmar que se cumple toda la rúbrica.
+Este repositorio conserva el contexto veterinario del proyecto del parcial e incorpora persistencia local con SQLite, una integración opcional con Firebase y un ejemplo de consumo REST.
 
 ## Requisitos
 
@@ -41,7 +41,7 @@ Al primer inicio, se copian los datos de demostración si las tablas están vac�
 
 ## Firebase: configuración externa necesaria
 
-Firebase no funcionará hasta configurar un proyecto propio. No se incluyen credenciales de un proyecto Firebase porque deben pertenecer al equipo.
+Firebase no funcionará hasta configurar un proyecto propio.
 
 1. Entra a https://console.firebase.google.com/ y crea un proyecto.
 2. Registra una aplicación web dentro del proyecto Firebase y copia su configuración.
@@ -84,10 +84,10 @@ Código principal:
 
 Solo se utilizan cuando no se ha configurado Firebase:
 
-| Rol | Usuario | Contraseña |
-|---|---|---|
-| Administrador | `admin` | `patitas123` |
-| Cliente | `usuario` | `usuario123` |
+| Rol           | Usuario   | Contraseña   |
+| ------------- | --------- | ------------ |
+| Administrador | `admin`   | `patitas123` |
+| Cliente       | `usuario` | `usuario123` |
 
 En modo Firebase, el inicio de sesión utiliza el correo electrónico de la cuenta.
 
