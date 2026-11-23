@@ -1,1 +1,1 @@
-export { default } from '../../screens/ListadoScreen';
+export { default } from '../../presentation/screens/ListadoScreen';

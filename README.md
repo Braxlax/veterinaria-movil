@@ -48,7 +48,7 @@ Hay solo dos roles:
 | Cliente       | `usuario` | `usuario123` | Solo **sus** mascotas, solicitudes y citas; puede registrar solicitudes, mascotas y citas, y cancelar sus citas; no puede editar estados ni eliminar solicitudes |
 
 Desde **Crear una cuenta** se registran clientes nuevos (rol Cliente).
-Los permisos están centralizados en `src/utils/permisos.ts`.
+Los permisos están centralizados en `src/domain/rules/permisos.ts`.
 
 ## Pantallas
 
@@ -82,33 +82,51 @@ Los permisos están centralizados en `src/utils/permisos.ts`.
 | **Roles**            | Cierra sesión (Perfil) y entra con `usuario`: solo verá lo suyo y no podrá editar estados ni eliminar solicitudes.                                                                             |
 | **Mascotas y citas** | Pestaña Mascotas → ficha → _Agendar cita_. Con `admin`, en la ficha usa **+ Registrar** para vacunas e historial.                                                                              |
 
-## Arquitectura
+## Arquitectura (Clean Architecture)
 
 ```
 src/
-├── app/          Rutas de Expo Router (delgadas: solo enlazan URL → pantalla). home.tsx es la Bienvenida; _layout protege rutas según la sesión
-│   └── (tabs)/   Barra de pestañas: Inicio, Solicitudes, Agenda, Mascotas, Perfil
-├── screens/      Pantallas (presentación)
-├── components/   Reutilizables: AppIcon, Chip, FormField, OptionSelector, PrimaryButton, SearchBar, FilterChips,
-│                 SolicitudCard, MascotaCard, CitaCard, Fab, SelectorDia, RegistroClinicoModal, EmptyState, ...
-├── store/        Estado global (useReducer + Context): auth, solicitudes, mascotas, citas, toast
-├── hooks/        usePermisos, useDatosVisibles (filtra datos según el rol)
-├── services/     Capa de datos simulada: solicitud, mascota, cita, auth (+ regla de horarios ocupados)
-├── data/         Datos de ejemplo en memoria
-├── models/       Tipos: Solicitud, Mascota, Cita, Usuario
-└── utils/        theme (diseño), constants, permisos, validators, fechas, format, ordenar, alerts
+├── app/                      Rutas de Expo Router (delgadas: solo enlazan URL → pantalla). home.tsx es la Bienvenida
+│   └── (tabs)/               Barra de pestañas: Inicio, Solicitudes, Agenda, Mascotas, Perfil
+├── domain/                   Reglas del negocio (sin React, Expo ni acceso a datos)
+│   ├── entities/             Solicitud, Mascota, Cita, Usuario
+│   ├── repositories/         Interfaces (contratos) de acceso a datos: solicitud, mascota, cita, auth
+│   ├── use-cases/            crearSolicitud, crearMascota, registrarHistorialClinico, agendarCita (+ regla de horarios ocupados)
+│   ├── rules/                permisos, validators, ordenar
+│   ├── utils/                fechas, id
+│   └── constants/            clinica (catálogo de servicios, horarios, veterinarios)
+├── infraestructure/          Origen de los datos
+│   ├── data/                 Datos de ejemplo en memoria
+│   ├── repositories/         Implementan los contratos de domain/repositories (usan los servicios)
+│   ├── services/             Fuente de datos simulada: solicitud, mascota, cita, auth
+│   └── storage/              Reservada para persistencia local
+└── presentation/             Interfaz y estado de la app
+    ├── screens/              Pantallas
+    ├── components/           Reutilizables: AppIcon, Chip, FormField, OptionSelector, PrimaryButton, SearchBar,
+    │                         FilterChips, SolicitudCard, MascotaCard, CitaCard, Fab, SelectorDia,
+    │                         RegistroClinicoModal, EmptyState, ...
+    ├── store/                Estado global (useReducer + Context): auth, solicitudes, mascotas, citas, toast
+    ├── hooks/                usePermisos, useDatosVisibles (filtra datos según el rol)
+    ├── theme/                Sistema de diseño (colores, espaciado, tipografía)
+    ├── constants/            ui (iconos, colores y etiquetas de estados, servicios, especies y roles)
+    └── utils/                alerts, format
 ```
 
-**Flujo de datos:** Pantalla → acción del Context → `dispatch` → reducer → nuevo estado → re-render.
-Las pantallas no contienen reglas de negocio: validaciones en `utils/validators`, permisos en `utils/permisos`,
-CRUD en los reducers y datos/reglas de agenda en `services`.
+**Regla de dependencias:** `domain` no importa de ninguna otra capa; `infraestructure` solo importa de `domain`
+(implementa sus interfaces); `presentation` importa de `domain` e `infraestructure` (los Contexts de `store/` son el
+único punto donde se conecta con los servicios).
+
+**Flujo de datos:** Pantalla → acción del Context → caso de uso (`domain/use-cases`) → `dispatch` → reducer → nuevo estado → re-render.
+La carga inicial pasa por el repositorio de `infraestructure/repositories`, que cumple el contrato de `domain/repositories` y obtiene los datos del servicio.
+Las pantallas no contienen reglas de negocio: validaciones y permisos en `domain/rules`,
+creación de entidades y regla de horarios en `domain/use-cases`, y CRUD en los reducers.
 
 **Hooks usados:** `useState` (formularios, filtros), `useEffect` (carga inicial simulada), `useReducer` + `Context`
 (CRUD en memoria y sesión), `useMemo` / `useCallback` (filtros y acciones).
 
 ## Diseño (UI/UX)
 
-- Sistema de diseño único en `utils/theme.ts` (colores, espaciado, radios, tipografía, sombras).
+- Sistema de diseño único en `presentation/theme/theme.ts` (colores, espaciado, radios, tipografía, sombras).
 - Iconografía coherente con Material Community Icons (`@expo/vector-icons`) mediante `AppIcon`.
 - Chips de estado/prioridad, tarjetas con barra de prioridad, estados vacíos y de carga, y mensajes de error bajo cada campo.
 - Feedback en cada acción: toast animado, confirmaciones al eliminar/cancelar y botón con indicador de carga en el registro.

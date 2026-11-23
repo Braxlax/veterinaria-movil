@@ -1,1 +1,1 @@
-export { default } from '../../screens/PerfilScreen';
+export { default } from '../../presentation/screens/PerfilScreen';

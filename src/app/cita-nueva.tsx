@@ -1,1 +1,1 @@
-export { default } from '../screens/CitaNuevaScreen';
+export { default } from '../presentation/screens/CitaNuevaScreen';

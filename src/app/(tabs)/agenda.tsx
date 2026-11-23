@@ -1,1 +1,1 @@
-export { default } from '../../screens/AgendaScreen';
+export { default } from '../../presentation/screens/AgendaScreen';

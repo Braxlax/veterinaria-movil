@@ -1,1 +1,1 @@
-export { default } from '../screens/RegistroScreen';
+export { default } from '../presentation/screens/RegistroScreen';
