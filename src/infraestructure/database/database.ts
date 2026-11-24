@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
-import { MASCOTAS_INICIALES } from '../data/mascotas';
 import { CITAS_INICIALES } from '../data/citas';
+import { MASCOTAS_INICIALES } from '../data/mascotas';
 import { SOLICITUDES_INICIALES } from '../data/solicitudes';
 import { notificarCambioLocal } from './databaseEvents';
 
@@ -61,9 +61,11 @@ async function inicializar() {
       UNIQUE(tipo, registro_id)
     );
   `);
-
-  // Migración segura para instalaciones creadas con una versión anterior del esquema.
-  try { await db.execAsync('ALTER TABLE sync_outbox ADD COLUMN owner_uid TEXT'); } catch { /* La columna ya existe. */ }
+  try {
+    await db.execAsync('ALTER TABLE sync_outbox ADD COLUMN owner_uid TEXT');
+  } catch {
+    /* La columna ya existe. */
+  }
 
   await sembrarSiVacio(db, 'mascotas', MASCOTAS_INICIALES);
   await sembrarSiVacio(db, 'citas', CITAS_INICIALES);
@@ -89,11 +91,17 @@ async function sembrarSiVacio<T extends { id: string }>(db: SQLite.SQLiteDatabas
 
 export async function obtenerRegistros<T>(tipo: TipoRegistroLocal): Promise<T[]> {
   const db = await abrirBaseDatos();
-  const filas = await db.getAllAsync<FilaRegistro>(`SELECT id, datos, sync_status, updated_at FROM ${TABLAS[tipo]} ORDER BY updated_at DESC`);
-  return filas.map((fila) => JSON.parse(fila.datos) as T);
+  const filas = await db.getAllAsync<FilaRegistro>(
+    `SELECT id, datos, sync_status, updated_at FROM ${TABLAS[tipo]} ORDER BY updated_at DESC`,
+  );
+  return filas.map(fila => JSON.parse(fila.datos) as T);
 }
 
-export async function guardarRegistro<T extends { id: string }>(tipo: TipoRegistroLocal, registro: T, ownerUid?: string | null): Promise<void> {
+export async function guardarRegistro<T extends { id: string }>(
+  tipo: TipoRegistroLocal,
+  registro: T,
+  ownerUid?: string | null,
+): Promise<void> {
   const db = await abrirBaseDatos();
   const ahora = new Date().toISOString();
   const datos = JSON.stringify(registro);
@@ -109,7 +117,11 @@ export async function guardarRegistro<T extends { id: string }>(tipo: TipoRegist
     await db.runAsync(
       `INSERT INTO sync_outbox (tipo, registro_id, operacion, datos, owner_uid, creado_en) VALUES (?, ?, 'guardar', ?, ?, ?)
        ON CONFLICT(tipo, registro_id) DO UPDATE SET operacion = 'guardar', datos = excluded.datos, owner_uid = excluded.owner_uid, creado_en = excluded.creado_en`,
-      tipo, registro.id, datos, ownerUid, ahora,
+      tipo,
+      registro.id,
+      datos,
+      ownerUid,
+      ahora,
     );
   } else {
     await db.runAsync('DELETE FROM sync_outbox WHERE tipo = ? AND registro_id = ?', tipo, registro.id);
@@ -125,7 +137,10 @@ export async function eliminarRegistro(tipo: TipoRegistroLocal, id: string, owne
     await db.runAsync(
       `INSERT INTO sync_outbox (tipo, registro_id, operacion, datos, owner_uid, creado_en) VALUES (?, ?, 'eliminar', NULL, ?, ?)
        ON CONFLICT(tipo, registro_id) DO UPDATE SET operacion = 'eliminar', datos = NULL, owner_uid = excluded.owner_uid, creado_en = excluded.creado_en`,
-      tipo, id, ownerUid, ahora,
+      tipo,
+      id,
+      ownerUid,
+      ahora,
     );
   } else {
     // Si el registro nunca llegó a la nube, cancelamos la operación pendiente en vez de crear un borrado remoto.
@@ -159,10 +174,37 @@ export async function contarPendientesSincronizacion(ownerUid?: string): Promise
 
 export async function guardarRegistroDesdeNube<T extends { id: string }>(tipo: TipoRegistroLocal, registro: T): Promise<void> {
   const db = await abrirBaseDatos();
+  const pendiente = await db.getFirstAsync<{ id: number }>(
+    'SELECT id FROM sync_outbox WHERE tipo = ? AND registro_id = ?',
+    tipo,
+    registro.id,
+  );
+  if (pendiente) return;
   await db.runAsync(
     `INSERT INTO ${TABLAS[tipo]} (id, datos, sync_status, updated_at) VALUES (?, ?, 'sincronizado', ?)
      ON CONFLICT(id) DO UPDATE SET datos = excluded.datos, sync_status = 'sincronizado', updated_at = excluded.updated_at`,
-    registro.id, JSON.stringify(registro), new Date().toISOString(),
+    registro.id,
+    JSON.stringify(registro),
+    new Date().toISOString(),
   );
+  notificarCambioLocal(tipo);
+}
+
+export async function eliminarSincronizadosAusentes(tipo: TipoRegistroLocal, idsEnNube: string[]): Promise<void> {
+  const db = await abrirBaseDatos();
+  const enNube = new Set(idsEnNube);
+  const locales = await db.getAllAsync<{ id: string }>(
+    `SELECT id FROM ${TABLAS[tipo]}
+     WHERE sync_status = 'sincronizado'
+       AND id NOT IN (SELECT registro_id FROM sync_outbox WHERE tipo = ?)`,
+    tipo,
+  );
+  const sobrantes = locales.filter(fila => !enNube.has(fila.id));
+  if (sobrantes.length === 0) return;
+  await db.withTransactionAsync(async () => {
+    for (const fila of sobrantes) {
+      await db.runAsync(`DELETE FROM ${TABLAS[tipo]} WHERE id = ?`, fila.id);
+    }
+  });
   notificarCambioLocal(tipo);
 }

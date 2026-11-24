@@ -1,7 +1,6 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { eliminarSincronizadosAusentes, guardarRegistroDesdeNube, OperacionPendiente, TipoRegistroLocal } from '../database/database';
 import { obtenerAuth, obtenerFirestore } from './config';
-import { OperacionPendiente, TipoRegistroLocal } from '../database/database';
-import { guardarRegistroDesdeNube } from '../database/database';
 
 const colecciones: Record<TipoRegistroLocal, string> = {
   mascotas: 'mascotas',
@@ -19,14 +18,18 @@ export async function sincronizarOperacionFirebase(pendiente: OperacionPendiente
     await deleteDoc(referencia);
     return;
   }
-  const datos = pendiente.datos ? JSON.parse(pendiente.datos) as Record<string, unknown> : {};
+  const datos = pendiente.datos ? (JSON.parse(pendiente.datos) as Record<string, unknown>) : {};
   const propietarioOriginal = typeof datos.ownerUid === 'string' ? datos.ownerUid : auth.currentUser.uid;
-  await setDoc(referencia, {
-    ...datos,
-    id: pendiente.registroId,
-    ownerUid: propietarioOriginal,
-    actualizadoEn: new Date().toISOString(),
-  }, { merge: true });
+  await setDoc(
+    referencia,
+    {
+      ...datos,
+      id: pendiente.registroId,
+      ownerUid: propietarioOriginal,
+      actualizadoEn: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 }
 
 export async function descargarDatosFirebase(tipo: TipoRegistroLocal): Promise<void> {
@@ -43,6 +46,14 @@ export async function descargarDatosFirebase(tipo: TipoRegistroLocal): Promise<v
   for (const documento of resultado.docs) {
     const datos = documento.data() as Record<string, unknown>;
     await guardarRegistroDesdeNube(tipo, { ...datos, id: documento.id } as { id: string });
+  }
+  // Solo si la respuesta vino realmente del servidor (no de la caché sin conexión),
+  // quitamos del dispositivo lo que ya no existe en la nube.
+  if (!resultado.metadata.fromCache) {
+    await eliminarSincronizadosAusentes(
+      tipo,
+      resultado.docs.map(documento => documento.id),
+    );
   }
 }
 
