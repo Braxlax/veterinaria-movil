@@ -2,6 +2,7 @@ import * as SQLite from 'expo-sqlite';
 import { CITAS_INICIALES } from '../data/citas';
 import { MASCOTAS_INICIALES } from '../data/mascotas';
 import { SOLICITUDES_INICIALES } from '../data/solicitudes';
+import { firebaseConfigurado } from '../firebase/config';
 import { notificarCambioLocal } from './databaseEvents';
 
 export type TipoRegistroLocal = 'mascotas' | 'citas' | 'solicitudes';
@@ -61,16 +62,30 @@ async function inicializar() {
       UNIQUE(tipo, registro_id)
     );
   `);
+
   try {
     await db.execAsync('ALTER TABLE sync_outbox ADD COLUMN owner_uid TEXT');
-  } catch {
-    /* La columna ya existe. */
-  }
+  } catch {}
 
-  await sembrarSiVacio(db, 'mascotas', MASCOTAS_INICIALES);
-  await sembrarSiVacio(db, 'citas', CITAS_INICIALES);
-  await sembrarSiVacio(db, 'solicitudes', SOLICITUDES_INICIALES);
+  if (firebaseConfigurado) {
+    await quitarEjemplos(db, 'mascotas', MASCOTAS_INICIALES);
+    await quitarEjemplos(db, 'citas', CITAS_INICIALES);
+    await quitarEjemplos(db, 'solicitudes', SOLICITUDES_INICIALES);
+  } else {
+    await sembrarSiVacio(db, 'mascotas', MASCOTAS_INICIALES);
+    await sembrarSiVacio(db, 'citas', CITAS_INICIALES);
+    await sembrarSiVacio(db, 'solicitudes', SOLICITUDES_INICIALES);
+  }
   return db;
+}
+
+async function quitarEjemplos<T extends { id: string }>(db: SQLite.SQLiteDatabase, tabla: TipoRegistroLocal, registros: T[]) {
+  if (registros.length === 0) return;
+  const marcas = registros.map(() => '?').join(', ');
+  await db.runAsync(
+    `DELETE FROM ${TABLAS[tabla]} WHERE sync_status = 'local' AND id IN (${marcas})`,
+    registros.map(registro => registro.id),
+  );
 }
 
 async function sembrarSiVacio<T extends { id: string }>(db: SQLite.SQLiteDatabase, tabla: TipoRegistroLocal, registros: T[]) {
@@ -143,7 +158,6 @@ export async function eliminarRegistro(tipo: TipoRegistroLocal, id: string, owne
       ahora,
     );
   } else {
-    // Si el registro nunca llegó a la nube, cancelamos la operación pendiente en vez de crear un borrado remoto.
     await db.runAsync('DELETE FROM sync_outbox WHERE tipo = ? AND registro_id = ?', tipo, id);
   }
 }
