@@ -1,8 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, initializeAuth, getReactNativePersistence, type Auth } from 'firebase/auth';
+import { getAuth, getReactNativePersistence, initializeAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const firebaseConfig = {
@@ -14,9 +14,11 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-export const firebaseConfigurado = Boolean(
-  firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId,
-);
+export const firebaseConfigurado = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
+
+// Cloud Storage exige el plan Blaze de Firebase. Mientras el proyecto siga en Spark,
+// la subida de imágenes queda desactivada. Para activarla: EXPO_PUBLIC_FIREBASE_STORAGE_HABILITADO=true
+export const storageHabilitado = firebaseConfigurado && process.env.EXPO_PUBLIC_FIREBASE_STORAGE_HABILITADO === 'true';
 
 let app: FirebaseApp | null = null;
 let authInstance: Auth | null = null;

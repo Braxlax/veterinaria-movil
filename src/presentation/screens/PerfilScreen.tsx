@@ -2,21 +2,20 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { permisosDe } from '../../domain/rules/permisos';
+import { storageHabilitado } from '../../infraestructure/firebase/config';
+import { seleccionarYSubirEvidencia } from '../../infraestructure/services/evidenciaService';
 import { AppIcon } from '../components/AppIcon';
 import { Avatar } from '../components/Avatar';
 import { DatoFila } from '../components/DatoFila';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionHeader } from '../components/SectionHeader';
+import { IconName, ROL_INFO } from '../constants/ui';
 import { useAuth } from '../store/AuthContext';
 import { useToast } from '../store/ToastContext';
-import { confirmar } from '../utils/alerts';
-import { IconName } from '../constants/ui';
-import { iniciales } from '../utils/format';
-import { ROL_INFO } from '../constants/ui';
-import { permisosDe } from '../../domain/rules/permisos';
-import { firebaseConfigurado } from '../../infraestructure/firebase/config';
-import { seleccionarYSubirEvidencia } from '../../infraestructure/services/evidenciaService';
 import { colors, radius, shadow, spacing } from '../theme/theme';
+import { confirmar } from '../utils/alerts';
+import { iniciales } from '../utils/format';
 
 const ENLACES: { titulo: string; icon: IconName; ruta: string }[] = [{ titulo: 'Servicios y precios', icon: 'tag', ruta: '/servicios' }];
 
@@ -86,7 +85,15 @@ export default function PerfilScreen() {
         ))}
       </View>
 
-      {firebaseConfigurado ? <PrimaryButton title="Subir evidencia a Firebase Storage" icon="image" loading={subiendoEvidencia} onPress={subirEvidencia} style={{ marginTop: spacing.md }} /> : null}
+      {storageHabilitado ? (
+        <PrimaryButton
+          title="Subir evidencia a Firebase Storage"
+          icon="image"
+          loading={subiendoEvidencia}
+          onPress={subirEvidencia}
+          style={{ marginTop: spacing.md }}
+        />
+      ) : null}
 
       <SectionHeader titulo="Información" />
       {ENLACES.map(e => (
