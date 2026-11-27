@@ -10,11 +10,13 @@ import { colors, radius, spacing } from '../theme/theme';
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { iniciarSesion } = useAuth();
+  const { iniciarSesion, recuperarContrasena } = useAuth();
   const [cargando, setCargando] = useState(false);
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
   const handleLogin = async () => {
     if (cargando) return;
@@ -32,6 +34,26 @@ export default function LoginScreen() {
       return;
     }
     setError('');
+  };
+
+  const handleRecuperar = async () => {
+    if (cargando || enviando) return;
+    setAviso('');
+    if (!usuario.trim()) {
+      setError('Escribe tu correo electrónico arriba y vuelve a tocar "¿Olvidaste tu contraseña?".');
+      return;
+    }
+
+    setEnviando(true);
+    const resultado = await recuperarContrasena(usuario);
+    setEnviando(false);
+
+    if (!resultado.ok) {
+      setError(resultado.mensaje);
+      return;
+    }
+    setError('');
+    setAviso('Si el correo está registrado, te enviamos un enlace para crear una nueva contraseña. Revisa también tu carpeta de spam.');
   };
 
   return (
@@ -66,6 +88,7 @@ export default function LoginScreen() {
               onChangeText={value => {
                 setUsuario(value);
                 setError('');
+                setAviso('');
               }}
               autoCapitalize="none"
               autoCorrect={false}
@@ -80,6 +103,7 @@ export default function LoginScreen() {
               onChangeText={value => {
                 setContrasena(value);
                 setError('');
+                setAviso('');
               }}
               secureTextEntry
               autoCapitalize="none"
@@ -87,6 +111,18 @@ export default function LoginScreen() {
               onSubmitEditing={handleLogin}
               returnKeyType="done"
             />
+
+            {firebaseConfigurado ? (
+              <Text accessibilityRole="button" onPress={handleRecuperar} style={styles.forgotLink}>
+                {enviando ? 'Enviando correo…' : '¿Olvidaste tu contraseña?'}
+              </Text>
+            ) : null}
+
+            {aviso ? (
+              <Text accessibilityRole="alert" style={styles.aviso}>
+                {aviso}
+              </Text>
+            ) : null}
 
             {error ? (
               <Text accessibilityRole="alert" style={styles.error}>
@@ -235,6 +271,20 @@ const styles = StyleSheet.create({
   },
   error: {
     color: colors.danger,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: spacing.md,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    color: colors.brand,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  aviso: {
+    color: colors.success,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: spacing.md,

@@ -3,6 +3,7 @@ import * as Network from 'expo-network';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -93,6 +94,12 @@ export async function registrarUsuarioFirebase(datos: DatosRegistro): Promise<vo
     }
     registroEnCurso = false;
   }
+}
+
+export async function enviarRecuperacionFirebase(correo: string): Promise<void> {
+  const auth = obtenerAuth();
+  if (!auth) throw new Error('Firebase no está configurado. Revisa el archivo .env.');
+  await sendPasswordResetEmail(auth, correo.trim());
 }
 
 export async function cerrarSesionFirebase(): Promise<void> {

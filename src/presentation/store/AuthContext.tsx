@@ -1,10 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
-import { useEffect } from 'react';
-import { authRepository } from '../../infraestructure/repositories/authRepository';
-import { firebaseConfigurado } from '../../infraestructure/firebase/config';
-import { observarSesionFirebase } from '../../infraestructure/firebase/authFirebaseService';
-import { sincronizarPendientes } from '../../infraestructure/sync/syncService';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import { DatosRegistro, Sesion } from '../../domain/entities/usuario';
+import { observarSesionFirebase } from '../../infraestructure/firebase/authFirebaseService';
+import { firebaseConfigurado } from '../../infraestructure/firebase/config';
+import { authRepository } from '../../infraestructure/repositories/authRepository';
+import { sincronizarPendientes } from '../../infraestructure/sync/syncService';
 import { authInitialState, authReducer } from './authReducer';
 
 type Resultado = { ok: true } | { ok: false; mensaje: string };
@@ -14,6 +13,7 @@ interface AuthContextType {
   autenticado: boolean;
   iniciarSesion: (usuario: string, contrasena: string) => Promise<Resultado>;
   registrarCuenta: (datos: DatosRegistro) => Promise<Resultado>;
+  recuperarContrasena: (correo: string) => Promise<Resultado>;
   cerrarSesion: () => Promise<void>;
 }
 
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!firebaseConfigurado) return;
-    return observarSesionFirebase((sesion) => {
+    return observarSesionFirebase(sesion => {
       if (sesion) {
         dispatch({ type: 'LOGIN', payload: sesion });
         void sincronizarPendientes();
@@ -45,13 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const registrarCuenta = useCallback((datos: DatosRegistro) => authRepository.registrar(datos), []);
+  const recuperarContrasena = useCallback((correo: string) => authRepository.recuperarContrasena(correo), []);
   const cerrarSesion = useCallback(async () => {
-    try { await authRepository.cerrarSesion(); } finally { dispatch({ type: 'LOGOUT' }); }
+    try {
+      await authRepository.cerrarSesion();
+    } finally {
+      dispatch({ type: 'LOGOUT' });
+    }
   }, []);
 
   const value = useMemo(
-    () => ({ sesion: state.sesion, autenticado: state.sesion !== null, iniciarSesion, registrarCuenta, cerrarSesion }),
-    [state.sesion, iniciarSesion, registrarCuenta, cerrarSesion]
+    () => ({ sesion: state.sesion, autenticado: state.sesion !== null, iniciarSesion, registrarCuenta, recuperarContrasena, cerrarSesion }),
+    [state.sesion, iniciarSesion, registrarCuenta, recuperarContrasena, cerrarSesion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

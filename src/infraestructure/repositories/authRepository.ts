@@ -3,6 +3,7 @@ import { authService } from '../services/authService';
 
 export const authRepository: AuthRepository = {
   autenticar: (usuario, contrasena) => authService.autenticar(usuario, contrasena),
-  registrar: (datos) => authService.registrar(datos),
+  registrar: datos => authService.registrar(datos),
+  recuperarContrasena: correo => authService.recuperarContrasena(correo),
   cerrarSesion: () => authService.cerrarSesion(),
 };
