@@ -1,8 +1,94 @@
 rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /usuarios/{uid}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Funciones auxiliares ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // El dueño actual del documento (el que ya está guardado) es quien hace la petición.
+    function isOwner() {
+      return signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // El dueño no puede cambiar al actualizar: evita que alguien "robe" un registro ajeno.
+    function ownerUnchanged() {
+      return request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    // Forma mínima de un registro: el campo id debe coincidir con el id del documento
+    // y debe traer su dueño (ownerUid).
+    function registroValido(id) {
+      return request.resource.data.id == id
+        && request.resource.data.ownerUid is string;
+    }
+
+    // ---------- Usuarios ----------
+    match /usuarios/{uid} {
+      // Al registrarse, cada persona solo puede crear SU perfil y siempre como cliente.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.rol == 'cliente'
+        && request.resource.data.keys().hasOnly(
+          ['usuario', 'nombre', 'apellidos', 'correo', 'telefono', 'rol', 'creadoEn']
+        );
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      // Puede editar su perfil, pero nunca cambiar su propio rol.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.rol == resource.data.rol;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Mascotas ----------
+    match /mascotas/{id} {
+      allow read: if signedIn() && (isAdmin() || isOwner());
+      allow create: if signedIn()
+        && registroValido(id)
+        && (isAdmin() || request.resource.data.ownerUid == request.auth.uid);
+      allow update: if signedIn()
+        && registroValido(id)
+        && ownerUnchanged()
+        && (isAdmin() || isOwner());
+      // resource == null: borrar algo que ya no existe no hace daño y no debe bloquear la sincronización.
+      allow delete: if signedIn() && (resource == null || isAdmin() || isOwner());
+    }
+
+    // ---------- Citas ----------
+    match /citas/{id} {
+      allow read: if signedIn() && (isAdmin() || isOwner());
+      allow create: if signedIn()
+        && registroValido(id)
+        && (isAdmin() || request.resource.data.ownerUid == request.auth.uid);
+      allow update: if signedIn()
+        && registroValido(id)
+        && ownerUnchanged()
+        && (isAdmin() || isOwner());
+      allow delete: if signedIn() && (resource == null || isAdmin() || isOwner());
+    }
+
+    // ---------- Solicitudes ----------
+    match /solicitudes/{id} {
+      allow read: if signedIn() && (isAdmin() || isOwner());
+      allow create: if signedIn()
+        && registroValido(id)
+        && (isAdmin() || request.resource.data.ownerUid == request.auth.uid);
+      allow update: if signedIn()
+        && registroValido(id)
+        && ownerUnchanged()
+        && (isAdmin() || isOwner());
+      allow delete: if signedIn() && (resource == null || isAdmin() || isOwner());
+    }
+
+    // ---------- Todo lo demás queda denegado ----------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
