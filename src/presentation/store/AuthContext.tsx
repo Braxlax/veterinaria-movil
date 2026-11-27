@@ -27,7 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return observarSesionFirebase(sesion => {
       if (sesion) {
         dispatch({ type: 'LOGIN', payload: sesion });
-        void sincronizarPendientes();
+        void sincronizarPendientes()
+          .then(resultado => {
+            console.log('[SYNC] Resultado:', resultado);
+          })
+          .catch(error => {
+            console.error('[SYNC] Error:', error);
+          });
       } else dispatch({ type: 'LOGOUT' });
     });
   }, []);
@@ -37,7 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const sesion = await authRepository.autenticar(usuario, contrasena);
       if (!sesion) return { ok: false, mensaje: 'Usuario o contraseña incorrectos.' };
       dispatch({ type: 'LOGIN', payload: sesion });
-      void sincronizarPendientes();
+      void sincronizarPendientes()
+        .then(resultado => {
+          console.log('[SYNC] Resultado:', resultado);
+        })
+        .catch(error => {
+          console.error('[SYNC] Error:', error);
+        });
       return { ok: true };
     } catch (error) {
       return { ok: false, mensaje: error instanceof Error ? error.message : 'No se pudo iniciar sesión.' };
