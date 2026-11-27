@@ -44,7 +44,7 @@ export async function sincronizarPendientes(): Promise<{
   const usuario = auth?.currentUser;
 
   if (!usuario) {
-    console.warn('[SYNC] No existe un usuario autenticado.');
+    console.log('[SYNC] No existe un usuario autenticado.');
 
     return {
       enviados: 0,
